@@ -1,0 +1,1040 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Aides Outre-Mer — Simulateur FEDER | LOSKO</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --red: #C00000;
+    --red-dark: #8B0000;
+    --red-light: #fdf0f0;
+    --black: #1A1A1A;
+    --anthracite: #3a3a3a;
+    --grey: #6b6b6b;
+    --grey-light: #f5f5f5;
+    --white: #ffffff;
+    --border: #e0e0e0;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--white);
+    color: var(--black);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* HEADER */
+  header {
+    background: var(--black);
+    padding: 18px 40px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+  .logo {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+  }
+  .logo-badge {
+    width: 36px; height: 36px;
+    background: var(--red);
+    border-radius: 6px;
+    display: flex; align-items: center; justify-content: center;
+    font-family: 'Playfair Display', serif;
+    font-weight: 900;
+    color: white;
+    font-size: 18px;
+  }
+  .logo-text {
+    display: flex; flex-direction: column;
+  }
+  .logo-name {
+    font-family: 'Playfair Display', serif;
+    font-weight: 700;
+    font-size: 16px;
+    color: white;
+    letter-spacing: 0.04em;
+  }
+  .logo-sub {
+    font-size: 10px;
+    color: #888;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+  }
+  .header-tag {
+    background: var(--red);
+    color: white;
+    font-size: 11px;
+    font-weight: 600;
+    padding: 5px 12px;
+    border-radius: 20px;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+  }
+
+  /* HERO */
+  .hero {
+    background: var(--black);
+    padding: 80px 40px 100px;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+  }
+  .hero::before {
+    content: '';
+    position: absolute;
+    top: -60px; left: 50%;
+    transform: translateX(-50%);
+    width: 600px; height: 600px;
+    background: radial-gradient(circle, rgba(192,0,0,0.15) 0%, transparent 70%);
+    pointer-events: none;
+  }
+  .hero-label {
+    display: inline-block;
+    border: 1px solid rgba(192,0,0,0.5);
+    color: var(--red);
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    padding: 6px 16px;
+    border-radius: 20px;
+    margin-bottom: 28px;
+  }
+  .hero h1 {
+    font-family: 'Playfair Display', serif;
+    font-size: clamp(36px, 5vw, 64px);
+    font-weight: 900;
+    color: white;
+    line-height: 1.1;
+    margin-bottom: 20px;
+    max-width: 700px;
+    margin-left: auto;
+    margin-right: auto;
+  }
+  .hero h1 span { color: var(--red); }
+  .hero p {
+    font-size: 18px;
+    color: #aaa;
+    font-weight: 300;
+    max-width: 500px;
+    margin: 0 auto 40px;
+    line-height: 1.7;
+  }
+  .hero-stats {
+    display: flex;
+    gap: 40px;
+    justify-content: center;
+    flex-wrap: wrap;
+  }
+  .stat {
+    text-align: center;
+  }
+  .stat-num {
+    font-family: 'Playfair Display', serif;
+    font-size: 32px;
+    font-weight: 900;
+    color: var(--red);
+  }
+  .stat-label {
+    font-size: 12px;
+    color: #777;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    margin-top: 4px;
+  }
+
+  /* MAIN CONTAINER */
+  main {
+    max-width: 780px;
+    margin: -50px auto 0;
+    padding: 0 20px 80px;
+    position: relative;
+    z-index: 10;
+  }
+
+  /* SIMULATEUR CARD */
+  .simulator-card {
+    background: white;
+    border-radius: 16px;
+    box-shadow: 0 20px 80px rgba(0,0,0,0.15), 0 2px 8px rgba(0,0,0,0.05);
+    overflow: hidden;
+  }
+
+  .card-header {
+    background: var(--red);
+    padding: 28px 40px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .card-header-title {
+    font-family: 'Playfair Display', serif;
+    font-size: 22px;
+    font-weight: 700;
+    color: white;
+  }
+  .card-header-sub {
+    font-size: 13px;
+    color: rgba(255,255,255,0.7);
+    margin-top: 4px;
+  }
+  .progress-container {
+    text-align: right;
+  }
+  .progress-text {
+    font-size: 12px;
+    color: rgba(255,255,255,0.7);
+    margin-bottom: 8px;
+  }
+  .progress-bar {
+    width: 120px;
+    height: 4px;
+    background: rgba(255,255,255,0.2);
+    border-radius: 2px;
+    overflow: hidden;
+  }
+  .progress-fill {
+    height: 100%;
+    background: white;
+    border-radius: 2px;
+    transition: width 0.4s ease;
+  }
+
+  /* STEPS */
+  .steps-body { padding: 40px; }
+
+  .step { display: none; animation: fadeIn 0.35s ease; }
+  .step.active { display: block; }
+
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(12px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  .step-number {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--red);
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    margin-bottom: 10px;
+  }
+  .step-question {
+    font-family: 'Playfair Display', serif;
+    font-size: 26px;
+    font-weight: 700;
+    color: var(--black);
+    margin-bottom: 8px;
+    line-height: 1.3;
+  }
+  .step-hint {
+    font-size: 14px;
+    color: var(--grey);
+    margin-bottom: 32px;
+    line-height: 1.5;
+  }
+
+  /* OPTIONS GRID */
+  .options-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 12px;
+    margin-bottom: 36px;
+  }
+  .option-btn {
+    background: var(--grey-light);
+    border: 2px solid transparent;
+    border-radius: 10px;
+    padding: 16px 18px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    text-align: left;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--anthracite);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    position: relative;
+    overflow: hidden;
+  }
+  .option-btn::before {
+    content: '';
+    position: absolute;
+    left: 0; top: 0; bottom: 0;
+    width: 3px;
+    background: var(--red);
+    transform: scaleY(0);
+    transition: transform 0.2s ease;
+    border-radius: 3px 0 0 3px;
+  }
+  .option-btn:hover {
+    border-color: rgba(192,0,0,0.3);
+    background: var(--red-light);
+    color: var(--black);
+  }
+  .option-btn:hover::before { transform: scaleY(1); }
+  .option-btn.selected {
+    border-color: var(--red);
+    background: var(--red-light);
+    color: var(--black);
+    font-weight: 600;
+  }
+  .option-btn.selected::before { transform: scaleY(1); }
+  .option-icon { font-size: 18px; flex-shrink: 0; }
+  .option-check {
+    position: absolute;
+    right: 12px; top: 50%;
+    transform: translateY(-50%);
+    width: 18px; height: 18px;
+    background: var(--red);
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    opacity: 0;
+    transition: opacity 0.2s;
+  }
+  .option-check::after {
+    content: '✓';
+    font-size: 11px;
+    color: white;
+    font-weight: 700;
+  }
+  .option-btn.selected .option-check { opacity: 1; }
+
+  /* NAV BUTTONS */
+  .step-nav {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-top: 8px;
+    border-top: 1px solid var(--border);
+  }
+  .btn-back {
+    background: none;
+    border: 1px solid var(--border);
+    color: var(--grey);
+    padding: 12px 24px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 14px;
+    font-weight: 500;
+    transition: all 0.2s;
+    display: flex; align-items: center; gap: 8px;
+  }
+  .btn-back:hover { border-color: var(--anthracite); color: var(--black); }
+  .btn-next {
+    background: var(--red);
+    border: none;
+    color: white;
+    padding: 14px 32px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 15px;
+    font-weight: 600;
+    transition: all 0.2s;
+    display: flex; align-items: center; gap: 10px;
+    letter-spacing: 0.01em;
+  }
+  .btn-next:hover { background: var(--red-dark); transform: translateY(-1px); box-shadow: 0 4px 16px rgba(192,0,0,0.3); }
+  .btn-next:disabled { background: #ccc; cursor: not-allowed; transform: none; box-shadow: none; }
+
+  /* LOADING */
+  .loading-screen {
+    display: none;
+    padding: 60px 40px;
+    text-align: center;
+  }
+  .loading-screen.active { display: block; }
+  .loader {
+    width: 48px; height: 48px;
+    border: 3px solid var(--grey-light);
+    border-top-color: var(--red);
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+    margin: 0 auto 24px;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .loading-title {
+    font-family: 'Playfair Display', serif;
+    font-size: 22px;
+    color: var(--black);
+    margin-bottom: 10px;
+  }
+  .loading-sub { font-size: 14px; color: var(--grey); }
+
+  /* RESULTS */
+  .results-screen {
+    display: none;
+    padding: 40px;
+  }
+  .results-screen.active { display: block; animation: fadeIn 0.5s ease; }
+
+  .result-header {
+    display: flex; align-items: flex-start; gap: 20px;
+    margin-bottom: 32px;
+    padding-bottom: 28px;
+    border-bottom: 1px solid var(--border);
+  }
+  .result-icon {
+    width: 56px; height: 56px;
+    background: var(--red-light);
+    border-radius: 12px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 26px;
+    flex-shrink: 0;
+  }
+  .result-title {
+    font-family: 'Playfair Display', serif;
+    font-size: 28px;
+    font-weight: 700;
+    color: var(--black);
+    margin-bottom: 6px;
+  }
+  .result-subtitle { font-size: 15px; color: var(--grey); line-height: 1.6; }
+
+  .aides-list { margin-bottom: 28px; }
+  .aide-card {
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 20px 24px;
+    margin-bottom: 12px;
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    transition: border-color 0.2s;
+  }
+  .aide-card:hover { border-color: var(--red); }
+  .aide-badge {
+    background: var(--red);
+    color: white;
+    font-size: 12px;
+    font-weight: 700;
+    padding: 6px 12px;
+    border-radius: 6px;
+    white-space: nowrap;
+    letter-spacing: 0.05em;
+  }
+  .aide-info { flex: 1; }
+  .aide-name { font-weight: 600; font-size: 15px; color: var(--black); margin-bottom: 3px; }
+  .aide-desc { font-size: 13px; color: var(--grey); }
+  .aide-taux {
+    font-family: 'Playfair Display', serif;
+    font-size: 22px;
+    font-weight: 700;
+    color: var(--red);
+    white-space: nowrap;
+  }
+
+  .estimation-box {
+    background: var(--black);
+    border-radius: 12px;
+    padding: 28px 32px;
+    margin-bottom: 28px;
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 20px;
+    flex-wrap: wrap;
+  }
+  .estimation-label { font-size: 13px; color: #aaa; text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 8px; }
+  .estimation-amount {
+    font-family: 'Playfair Display', serif;
+    font-size: 36px;
+    font-weight: 900;
+    color: var(--red);
+  }
+  .estimation-desc { font-size: 13px; color: #888; margin-top: 4px; }
+  .estimation-arrow { font-size: 32px; color: #444; }
+
+  .next-steps { margin-bottom: 28px; }
+  .next-steps-title {
+    font-size: 13px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--grey);
+    margin-bottom: 14px;
+  }
+  .next-step-item {
+    display: flex; align-items: center; gap: 12px;
+    padding: 10px 0;
+    border-bottom: 1px solid var(--border);
+    font-size: 14px;
+    color: var(--anthracite);
+  }
+  .next-step-item:last-child { border-bottom: none; }
+  .step-dot {
+    width: 22px; height: 22px;
+    background: var(--red-light);
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--red);
+    flex-shrink: 0;
+  }
+
+  .cta-section { display: flex; gap: 12px; flex-wrap: wrap; }
+  .btn-primary {
+    flex: 1;
+    background: var(--red);
+    color: white;
+    border: none;
+    padding: 16px 28px;
+    border-radius: 10px;
+    cursor: pointer;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 15px;
+    font-weight: 600;
+    transition: all 0.2s;
+    display: flex; align-items: center; justify-content: center; gap: 10px;
+    min-width: 200px;
+  }
+  .btn-primary:hover { background: var(--red-dark); transform: translateY(-1px); box-shadow: 0 6px 20px rgba(192,0,0,0.3); }
+  .btn-secondary {
+    background: var(--grey-light);
+    color: var(--anthracite);
+    border: none;
+    padding: 16px 24px;
+    border-radius: 10px;
+    cursor: pointer;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 14px;
+    font-weight: 500;
+    transition: all 0.2s;
+    display: flex; align-items: center; gap: 8px;
+  }
+  .btn-secondary:hover { background: var(--border); }
+
+  /* AI ANALYSIS */
+  .ai-analysis {
+    display: none;
+    margin-top: 28px;
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    overflow: hidden;
+  }
+  .ai-analysis.active { display: block; animation: fadeIn 0.4s ease; }
+  .ai-header {
+    background: var(--grey-light);
+    padding: 14px 20px;
+    display: flex; align-items: center; gap: 10px;
+    border-bottom: 1px solid var(--border);
+  }
+  .ai-dot {
+    width: 8px; height: 8px;
+    background: var(--red);
+    border-radius: 50%;
+    animation: pulse 1.5s ease-in-out infinite;
+  }
+  @keyframes pulse {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.5; transform: scale(0.8); }
+  }
+  .ai-title { font-size: 13px; font-weight: 600; color: var(--anthracite); }
+  .ai-body { padding: 20px; font-size: 14px; color: var(--anthracite); line-height: 1.8; }
+  .ai-loading { color: var(--grey); font-style: italic; }
+
+  /* FOOTER */
+  footer {
+    background: var(--black);
+    padding: 40px;
+    text-align: center;
+    margin-top: 60px;
+  }
+  .footer-logo {
+    font-family: 'Playfair Display', serif;
+    font-size: 20px;
+    font-weight: 700;
+    color: white;
+    margin-bottom: 8px;
+  }
+  .footer-logo span { color: var(--red); }
+  .footer-sub { font-size: 12px; color: #666; }
+
+  /* RESPONSIVE */
+  @media (max-width: 600px) {
+    .hero { padding: 50px 20px 80px; }
+    .card-header { padding: 20px 24px; flex-direction: column; gap: 16px; align-items: flex-start; }
+    .steps-body { padding: 28px 24px; }
+    .options-grid { grid-template-columns: 1fr; }
+    .estimation-box { flex-direction: column; text-align: center; }
+    .estimation-arrow { display: none; }
+    .results-screen { padding: 24px; }
+    .aide-card { flex-wrap: wrap; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">
+    <div class="logo-badge">L</div>
+    <div class="logo-text">
+      <div class="logo-name">LOSKO CORPORATION</div>
+      <div class="logo-sub">Assistance à Maîtrise d'Ouvrage</div>
+    </div>
+  </div>
+  <div class="header-tag">FEDER · DOM-TOM</div>
+</header>
+
+<div class="hero">
+  <div class="hero-label">Simulateur gratuit — Résultat en 2 minutes</div>
+  <h1>Trouvez les aides pour financer votre projet en <span>Outre-mer</span></h1>
+  <p>Jusqu'à 60 % de votre investissement financé. Découvrez vos aides publiques en 7 questions.</p>
+  <div class="hero-stats">
+    <div class="stat"><div class="stat-num">60%</div><div class="stat-label">Financement max</div></div>
+    <div class="stat"><div class="stat-num">30+</div><div class="stat-label">Aides référencées</div></div>
+    <div class="stat"><div class="stat-num">4</div><div class="stat-label">DOM couverts</div></div>
+    <div class="stat"><div class="stat-num">2 min</div><div class="stat-label">Pour simuler</div></div>
+  </div>
+</div>
+
+<main>
+  <div class="simulator-card">
+
+    <div class="card-header">
+      <div>
+        <div class="card-header-title">Simulateur d'éligibilité aux aides</div>
+        <div class="card-header-sub">Répondez aux questions — obtenez votre résultat instantanément</div>
+      </div>
+      <div class="progress-container">
+        <div class="progress-text" id="progressText">Question 1 / 7</div>
+        <div class="progress-bar"><div class="progress-fill" id="progressFill" style="width:14%"></div></div>
+      </div>
+    </div>
+
+    <!-- ÉTAPES -->
+    <div class="steps-body" id="stepsBody">
+
+      <!-- Q1 : Territoire -->
+      <div class="step active" id="step1">
+        <div class="step-number">Question 01 — Localisation</div>
+        <div class="step-question">Où se situe votre projet ?</div>
+        <div class="step-hint">Sélectionnez le territoire concerné par votre investissement.</div>
+        <div class="options-grid">
+          <button class="option-btn" data-q="territoire" data-v="Guadeloupe" onclick="selectOption(this)">
+            <span class="option-icon">🌴</span> Guadeloupe <span class="option-check"></span>
+          </button>
+          <button class="option-btn" data-q="territoire" data-v="Martinique" onclick="selectOption(this)">
+            <span class="option-icon">🏝️</span> Martinique <span class="option-check"></span>
+          </button>
+          <button class="option-btn" data-q="territoire" data-v="Guyane" onclick="selectOption(this)">
+            <span class="option-icon">🌿</span> Guyane <span class="option-check"></span>
+          </button>
+          <button class="option-btn" data-q="territoire" data-v="Réunion" onclick="selectOption(this)">
+            <span class="option-icon">🌋</span> La Réunion <span class="option-check"></span>
+          </button>
+        </div>
+        <div class="step-nav">
+          <div></div>
+          <button class="btn-next" id="next1" onclick="goNext(2)" disabled>Suivant →</button>
+        </div>
+      </div>
+
+      <!-- Q2 : Secteur -->
+      <div class="step" id="step2">
+        <div class="step-number">Question 02 — Secteur</div>
+        <div class="step-question">Quel est votre secteur d'activité ?</div>
+        <div class="step-hint">Choisissez le secteur qui correspond le mieux à votre activité principale.</div>
+        <div class="options-grid">
+          <button class="option-btn" data-q="secteur" data-v="Agriculture" onclick="selectOption(this)"><span class="option-icon">🌾</span> Agriculture <span class="option-check"></span></button>
+          <button class="option-btn" data-q="secteur" data-v="Agroalimentaire" onclick="selectOption(this)"><span class="option-icon">🥩</span> Agroalimentaire <span class="option-check"></span></button>
+          <button class="option-btn" data-q="secteur" data-v="Tourisme" onclick="selectOption(this)"><span class="option-icon">🏨</span> Tourisme <span class="option-check"></span></button>
+          <button class="option-btn" data-q="secteur" data-v="Commerce" onclick="selectOption(this)"><span class="option-icon">🏪</span> Commerce <span class="option-check"></span></button>
+          <button class="option-btn" data-q="secteur" data-v="Industrie" onclick="selectOption(this)"><span class="option-icon">🏭</span> Industrie <span class="option-check"></span></button>
+          <button class="option-btn" data-q="secteur" data-v="Numérique" onclick="selectOption(this)"><span class="option-icon">💻</span> Numérique <span class="option-check"></span></button>
+          <button class="option-btn" data-q="secteur" data-v="Services" onclick="selectOption(this)"><span class="option-icon">🤝</span> Services <span class="option-check"></span></button>
+          <button class="option-btn" data-q="secteur" data-v="BTP" onclick="selectOption(this)"><span class="option-icon">🏗️</span> BTP <span class="option-check"></span></button>
+        </div>
+        <div class="step-nav">
+          <button class="btn-back" onclick="goBack(1)">← Retour</button>
+          <button class="btn-next" id="next2" onclick="goNext(3)" disabled>Suivant →</button>
+        </div>
+      </div>
+
+      <!-- Q3 : Type de projet -->
+      <div class="step" id="step3">
+        <div class="step-number">Question 03 — Nature du projet</div>
+        <div class="step-question">Quel est le type de votre projet ?</div>
+        <div class="step-hint">Précisez la nature principale de votre démarche entrepreneuriale.</div>
+        <div class="options-grid">
+          <button class="option-btn" data-q="typeprojet" data-v="Création d'entreprise" onclick="selectOption(this)"><span class="option-icon">🚀</span> Création d'entreprise <span class="option-check"></span></button>
+          <button class="option-btn" data-q="typeprojet" data-v="Développement" onclick="selectOption(this)"><span class="option-icon">📈</span> Développement <span class="option-check"></span></button>
+          <button class="option-btn" data-q="typeprojet" data-v="Innovation" onclick="selectOption(this)"><span class="option-icon">💡</span> Innovation <span class="option-check"></span></button>
+          <button class="option-btn" data-q="typeprojet" data-v="Transition écologique" onclick="selectOption(this)"><span class="option-icon">♻️</span> Transition écologique <span class="option-check"></span></button>
+          <button class="option-btn" data-q="typeprojet" data-v="Transformation / Production" onclick="selectOption(this)"><span class="option-icon">⚙️</span> Transformation / Production <span class="option-check"></span></button>
+          <button class="option-btn" data-q="typeprojet" data-v="Formation / Emploi" onclick="selectOption(this)"><span class="option-icon">🎓</span> Formation / Emploi <span class="option-check"></span></button>
+        </div>
+        <div class="step-nav">
+          <button class="btn-back" onclick="goBack(2)">← Retour</button>
+          <button class="btn-next" id="next3" onclick="goNext(4)" disabled>Suivant →</button>
+        </div>
+      </div>
+
+      <!-- Q4 : Montant -->
+      <div class="step" id="step4">
+        <div class="step-number">Question 04 — Investissement</div>
+        <div class="step-question">Quel est le montant de votre investissement ?</div>
+        <div class="step-hint">Indiquez l'enveloppe globale de votre projet (hors taxes).</div>
+        <div class="options-grid">
+          <button class="option-btn" data-q="montant" data-v="moins de 20 000 €" onclick="selectOption(this)"><span class="option-icon">💰</span> Moins de 20 000 € <span class="option-check"></span></button>
+          <button class="option-btn" data-q="montant" data-v="20 000 – 100 000 €" onclick="selectOption(this)"><span class="option-icon">💰</span> 20 000 – 100 000 € <span class="option-check"></span></button>
+          <button class="option-btn" data-q="montant" data-v="100 000 – 500 000 €" onclick="selectOption(this)"><span class="option-icon">💰</span> 100 000 – 500 000 € <span class="option-check"></span></button>
+          <button class="option-btn" data-q="montant" data-v="plus de 500 000 €" onclick="selectOption(this)"><span class="option-icon">💰</span> Plus de 500 000 € <span class="option-check"></span></button>
+        </div>
+        <div class="step-nav">
+          <button class="btn-back" onclick="goBack(3)">← Retour</button>
+          <button class="btn-next" id="next4" onclick="goNext(5)" disabled>Suivant →</button>
+        </div>
+      </div>
+
+      <!-- Q5 : Entreprise existante -->
+      <div class="step" id="step5">
+        <div class="step-number">Question 05 — Structure</div>
+        <div class="step-question">Votre entreprise existe-t-elle déjà ?</div>
+        <div class="step-hint">Cela détermine les dispositifs accessibles à votre situation.</div>
+        <div class="options-grid" style="grid-template-columns: 1fr 1fr;">
+          <button class="option-btn" data-q="entreprise" data-v="Oui" onclick="selectOption(this)"><span class="option-icon">✅</span> Oui, elle est créée <span class="option-check"></span></button>
+          <button class="option-btn" data-q="entreprise" data-v="Non" onclick="selectOption(this)"><span class="option-icon">🌱</span> Non, en cours de création <span class="option-check"></span></button>
+        </div>
+        <div class="step-nav">
+          <button class="btn-back" onclick="goBack(4)">← Retour</button>
+          <button class="btn-next" id="next5" onclick="goNext(6)" disabled>Suivant →</button>
+        </div>
+      </div>
+
+      <!-- Q6 : Effectif -->
+      <div class="step" id="step6">
+        <div class="step-number">Question 06 — Taille</div>
+        <div class="step-question">Combien d'employés compte votre structure ?</div>
+        <div class="step-hint">Le nombre de salariés influe sur les critères d'éligibilité.</div>
+        <div class="options-grid" style="grid-template-columns: repeat(2, 1fr);">
+          <button class="option-btn" data-q="effectif" data-v="0 (solo / créateur)" onclick="selectOption(this)"><span class="option-icon">👤</span> 0 — Solo / Créateur <span class="option-check"></span></button>
+          <button class="option-btn" data-q="effectif" data-v="1 à 5" onclick="selectOption(this)"><span class="option-icon">👥</span> 1 à 5 salariés <span class="option-check"></span></button>
+          <button class="option-btn" data-q="effectif" data-v="5 à 20" onclick="selectOption(this)"><span class="option-icon">👥</span> 5 à 20 salariés <span class="option-check"></span></button>
+          <button class="option-btn" data-q="effectif" data-v="plus de 20" onclick="selectOption(this)"><span class="option-icon">🏢</span> Plus de 20 salariés <span class="option-check"></span></button>
+        </div>
+        <div class="step-nav">
+          <button class="btn-back" onclick="goBack(5)">← Retour</button>
+          <button class="btn-next" id="next6" onclick="goNext(7)" disabled>Suivant →</button>
+        </div>
+      </div>
+
+      <!-- Q7 : Thématique -->
+      <div class="step" id="step7">
+        <div class="step-number">Question 07 — Thématique prioritaire</div>
+        <div class="step-question">Votre projet concerne-t-il une thématique prioritaire ?</div>
+        <div class="step-hint">Certaines thématiques ouvrent droit à des financements bonifiés.</div>
+        <div class="options-grid">
+          <button class="option-btn" data-q="thematique" data-v="Innovation" onclick="selectOption(this)"><span class="option-icon">🔬</span> Innovation <span class="option-check"></span></button>
+          <button class="option-btn" data-q="thematique" data-v="Environnement" onclick="selectOption(this)"><span class="option-icon">🌱</span> Environnement <span class="option-check"></span></button>
+          <button class="option-btn" data-q="thematique" data-v="Production locale" onclick="selectOption(this)"><span class="option-icon">🏭</span> Production locale <span class="option-check"></span></button>
+          <button class="option-btn" data-q="thematique" data-v="Tourisme" onclick="selectOption(this)"><span class="option-icon">🏖️</span> Tourisme <span class="option-check"></span></button>
+          <button class="option-btn" data-q="thematique" data-v="Aucune thématique prioritaire" onclick="selectOption(this)"><span class="option-icon">➖</span> Aucune thématique prioritaire <span class="option-check"></span></button>
+        </div>
+        <div class="step-nav">
+          <button class="btn-back" onclick="goBack(6)">← Retour</button>
+          <button class="btn-next" id="next7" onclick="analyzeAndShow()" disabled>Voir mes aides →</button>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- LOADING -->
+    <div class="loading-screen" id="loadingScreen">
+      <div class="loader"></div>
+      <div class="loading-title">Analyse de votre projet en cours…</div>
+      <div class="loading-sub">Consultation de la base de données des aides DOM · FEDER · ADEME · BPI · Région</div>
+    </div>
+
+    <!-- RÉSULTATS -->
+    <div class="results-screen" id="resultsScreen">
+      <div class="result-header">
+        <div class="result-icon">🎯</div>
+        <div>
+          <div class="result-title">Résultat de votre simulation</div>
+          <div class="result-subtitle" id="resultSubtitle">Votre projet est potentiellement éligible aux aides suivantes.</div>
+        </div>
+      </div>
+
+      <div class="aides-list" id="aidesList"></div>
+
+      <div class="estimation-box" id="estimationBox">
+        <div>
+          <div class="estimation-label">Investissement déclaré</div>
+          <div class="estimation-amount" id="investAmount">—</div>
+        </div>
+        <div class="estimation-arrow">→</div>
+        <div>
+          <div class="estimation-label">Subvention estimée</div>
+          <div class="estimation-amount" id="subventionAmount" style="color:white;">—</div>
+          <div class="estimation-desc">Estimation indicative · sujet à instruction</div>
+        </div>
+      </div>
+
+      <div class="next-steps">
+        <div class="next-steps-title">Prochaines étapes recommandées</div>
+        <div class="next-step-item"><div class="step-dot">1</div> Vérifier l'éligibilité complète auprès des organismes</div>
+        <div class="next-step-item"><div class="step-dot">2</div> Préparer votre plan de financement détaillé</div>
+        <div class="next-step-item"><div class="step-dot">3</div> Constituer votre dossier de demande de subvention</div>
+        <div class="next-step-item"><div class="step-dot">4</div> Déposer le dossier avant les dates limites</div>
+      </div>
+
+      <div class="cta-section">
+        <button class="btn-primary" onclick="getReport()">📄 Télécharger le rapport complet — 19 €</button>
+        <button class="btn-secondary" onclick="contactLosko()">📞 Être accompagné par LOSKO</button>
+      </div>
+
+      <div class="ai-analysis" id="aiAnalysis">
+        <div class="ai-header">
+          <div class="ai-dot"></div>
+          <div class="ai-title">Analyse approfondie par l'IA LOSKO</div>
+        </div>
+        <div class="ai-body" id="aiBody"><span class="ai-loading">Analyse en cours…</span></div>
+      </div>
+
+      <div style="margin-top:20px; text-align:center;">
+        <button class="btn-secondary" onclick="restartSimulator()" style="margin:0 auto;">↩ Nouvelle simulation</button>
+      </div>
+    </div>
+
+  </div>
+</main>
+
+<footer>
+  <div class="footer-logo">LOSKO <span>CORPORATION</span></div>
+  <div class="footer-sub">23 Résidence l'Orée du Domaine · 97139 Les Abymes · Guadeloupe<br>brival.guillaume@gmail.com · 06 90 40 02 20</div>
+</footer>
+
+<script>
+  // ============================================================
+  // STATE
+  // ============================================================
+  const answers = {};
+  const TOTAL_STEPS = 7;
+
+  // ============================================================
+  // NAVIGATION
+  // ============================================================
+  function selectOption(btn) {
+    const q = btn.dataset.q;
+    const v = btn.dataset.v;
+    document.querySelectorAll(`[data-q="${q}"]`).forEach(b => b.classList.remove('selected'));
+    btn.classList.add('selected');
+    answers[q] = v;
+    const stepNum = btn.closest('.step').id.replace('step','');
+    const nextBtn = document.getElementById('next' + stepNum);
+    if (nextBtn) nextBtn.disabled = false;
+  }
+
+  function goNext(stepNum) {
+    document.querySelectorAll('.step').forEach(s => s.classList.remove('active'));
+    document.getElementById('step' + stepNum).classList.add('active');
+    updateProgress(stepNum);
+    window.scrollTo({ top: document.querySelector('.simulator-card').offsetTop - 80, behavior: 'smooth' });
+  }
+
+  function goBack(stepNum) {
+    document.querySelectorAll('.step').forEach(s => s.classList.remove('active'));
+    document.getElementById('step' + stepNum).classList.add('active');
+    updateProgress(stepNum);
+  }
+
+  function updateProgress(step) {
+    const pct = Math.round((step / TOTAL_STEPS) * 100);
+    document.getElementById('progressFill').style.width = pct + '%';
+    document.getElementById('progressText').textContent = `Question ${step} / ${TOTAL_STEPS}`;
+  }
+
+  // ============================================================
+  // LOGIQUE DE MATCHING
+  // ============================================================
+  function computeAides() {
+    const { secteur, typeprojet, thematique, montant, effectif } = answers;
+    const aides = [];
+
+    // FEDER
+    if (['Numérique','Innovation','Industrie','BTP','Tourisme','Agroalimentaire','Agriculture'].includes(secteur) ||
+        ['Innovation','Transition écologique','Développement','Transformation / Production'].includes(typeprojet) ||
+        ['Innovation','Environnement','Production locale','Tourisme'].includes(thematique)) {
+      aides.push({ badge: 'FEDER', name: 'Fonds Européen de Développement Régional', desc: 'Financement investissements productifs, innovation et transition numérique', taux: '40 % – 70 %', tauxMin: 0.40, tauxMax: 0.70 });
+    }
+
+    // FEADER
+    if (['Agriculture','Agroalimentaire'].includes(secteur) ||
+        ['Transformation / Production'].includes(typeprojet)) {
+      aides.push({ badge: 'FEADER', name: 'Fonds Européen Agricole pour le Développement Rural', desc: 'Soutien aux projets agricoles, agroalimentaires et ruraux', taux: '40 % – 65 %', tauxMin: 0.40, tauxMax: 0.65 });
+    }
+
+    // FSE+
+    if (['Formation / Emploi'].includes(typeprojet) || effectif === '0 (solo / créateur)') {
+      aides.push({ badge: 'FSE+', name: 'Fonds Social Européen+', desc: 'Emploi, formation professionnelle et inclusion sociale', taux: '50 % – 60 %', tauxMin: 0.50, tauxMax: 0.60 });
+    }
+
+    // ARICE Région
+    if (['Guadeloupe'].includes(answers.territoire)) {
+      aides.push({ badge: 'ARICE', name: 'Aide Régionale à l'Investissement et à la Création d'Emploi', desc: 'Subvention Région Guadeloupe pour investissements 10k–80k€', taux: '40 %', tauxMin: 0.40, tauxMax: 0.40 });
+    }
+
+    // BPI France
+    if (['Numérique','Innovation','Industrie'].includes(secteur) ||
+        ['Innovation'].includes(typeprojet)) {
+      aides.push({ badge: 'BPI France', name: 'Subvention Innovation Outre-Mer / Prêt Développement', desc: 'Aide à l'innovation et financement des PME ultramarines', taux: '50 % – 70 %', tauxMin: 0.50, tauxMax: 0.70 });
+    }
+
+    // ADEME
+    if (['Transition écologique','Environnement'].includes(typeprojet) ||
+        ['Environnement'].includes(thematique)) {
+      aides.push({ badge: 'ADEME', name: 'Subvention Investissement Outre-Mer – ADEME', desc: 'Projets de transition énergétique et environnementale', taux: '50 % – 80 %', tauxMin: 0.50, tauxMax: 0.80 });
+    }
+
+    // Fallback
+    if (aides.length === 0) {
+      aides.push({ badge: 'ARDDA', name: 'Aide Régionale au Démarrage et Développement d'Activités', desc: 'Subvention jusqu'à 10 000 € pour TPE en création ou développement', taux: '40 %', tauxMin: 0.40, tauxMax: 0.40 });
+    }
+
+    return aides;
+  }
+
+  function estimateAmount(aides) {
+    const montantMap = {
+      'moins de 20 000 €': { min: 5000, max: 20000, mid: 12500 },
+      '20 000 – 100 000 €': { min: 20000, max: 100000, mid: 60000 },
+      '100 000 – 500 000 €': { min: 100000, max: 500000, mid: 300000 },
+      'plus de 500 000 €': { min: 500000, max: 2000000, mid: 1000000 },
+    };
+    const m = montantMap[answers.montant] || { mid: 50000 };
+    const maxTaux = Math.max(...aides.map(a => a.tauxMax));
+    const minTaux = Math.min(...aides.map(a => a.tauxMin));
+    return {
+      min: Math.round(m.mid * minTaux),
+      max: Math.round(m.mid * maxTaux),
+      invest: answers.montant
+    };
+  }
+
+  function formatEuro(n) {
+    return new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR', maximumFractionDigits: 0 }).format(n);
+  }
+
+  // ============================================================
+  // SHOW RESULTS
+  // ============================================================
+  function analyzeAndShow() {
+    document.getElementById('stepsBody').style.display = 'none';
+    document.getElementById('loadingScreen').classList.add('active');
+
+    setTimeout(() => {
+      const aides = computeAides();
+      const estimation = estimateAmount(aides);
+
+      // Aides
+      const aidesList = document.getElementById('aidesList');
+      aidesList.innerHTML = aides.map(a => `
+        <div class="aide-card">
+          <div class="aide-badge">${a.badge}</div>
+          <div class="aide-info">
+            <div class="aide-name">${a.name}</div>
+            <div class="aide-desc">${a.desc}</div>
+          </div>
+          <div class="aide-taux">${a.taux}</div>
+        </div>
+      `).join('');
+
+      // Estimation
+      document.getElementById('investAmount').textContent = answers.montant;
+      document.getElementById('subventionAmount').textContent = `${formatEuro(estimation.min)} – ${formatEuro(estimation.max)}`;
+
+      // Subtitle
+      document.getElementById('resultSubtitle').textContent =
+        `${aides.length} dispositif${aides.length > 1 ? 's identifiés' : ' identifié'} pour votre projet ${answers.typeprojet?.toLowerCase() || ''} en ${answers.territoire || 'Outre-mer'}.`;
+
+      // Show results
+      document.getElementById('loadingScreen').classList.remove('active');
+      document.getElementById('resultsScreen').classList.add('active');
+
+      // AI Analysis
+      document.getElementById('aiAnalysis').classList.add('active');
+      callAIAnalysis(aides, estimation);
+
+    }, 2000);
+  }
+
+  // ============================================================
+  // API CALL — LOSKO BACKEND
+  // ============================================================
+  async function callAIAnalysis(aides, estimation) {
+    const prompt = `Tu es un expert AMO (Assistance à Maîtrise d'Ouvrage) spécialisé dans le financement public en Outre-mer, travaillant pour LOSKO CORPORATION en Guadeloupe.
+
+Un porteur de projet vient de remplir un simulateur avec les informations suivantes :
+- Territoire : ${answers.territoire}
+- Secteur : ${answers.secteur}
+- Type de projet : ${answers.typeprojet}
+- Montant d'investissement : ${answers.montant}
+- Entreprise existante : ${answers.entreprise}
+- Effectif : ${answers.effectif}
+- Thématique prioritaire : ${answers.thematique}
+
+Les aides identifiées sont : ${aides.map(a => a.badge + ' (' + a.taux + ')').join(', ')}.
+
+Rédige en 3-4 phrases une analyse personnalisée, professionnelle et encourageante de son dossier. Mentionne les points forts de son profil pour obtenir ces financements, et une recommandation concrète d'étape suivante. Sois direct et actionnable. Pas de titre, juste le texte.`;
+
+    try {
+      const response = await fetch('https://losko-api1.onrender.com/analyze', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ prompt })
+      });
+
+      if (!response.ok) throw new Error('API error');
+      const data = await response.json();
+      document.getElementById('aiBody').innerHTML = data.result || data.content || 'Analyse disponible après configuration de l\'API.';
+    } catch (e) {
+      // Fallback local
+      const fallback = `Votre projet ${answers.typeprojet?.toLowerCase()} dans le secteur ${answers.secteur} en ${answers.territoire} présente un profil solide pour accéder aux financements européens. Avec ${aides.length} dispositif${aides.length > 1 ? 's' : ''} identifié${aides.length > 1 ? 's' : ''}, votre potentiel de financement est significatif. La prochaine étape clé est de constituer un dossier complet avec plan de financement, business plan et pièces administratives. LOSKO CORPORATION peut vous accompagner de A à Z dans cette démarche.`;
+      document.getElementById('aiBody').textContent = fallback;
+    }
+  }
+
+  // ============================================================
+  // ACTIONS
+  // ============================================================
+  function getReport() {
+    alert('Fonctionnalité de paiement en cours d\'intégration.\nContactez LOSKO CORPORATION : brival.guillaume@gmail.com');
+  }
+
+  function contactLosko() {
+    window.location.href = 'mailto:brival.guillaume@gmail.com?subject=Demande accompagnement FEDER&body=Bonjour,%0A%0AJe souhaite être accompagné par LOSKO CORPORATION pour mon projet en ' + (answers.territoire || 'Outre-mer') + '.%0A%0ACordialement';
+  }
+
+  function restartSimulator() {
+    Object.keys(answers).forEach(k => delete answers[k]);
+    document.querySelectorAll('.option-btn').forEach(b => b.classList.remove('selected'));
+    document.querySelectorAll('.btn-next').forEach(b => b.disabled = true);
+    document.getElementById('resultsScreen').classList.remove('active');
+    document.getElementById('aiAnalysis').classList.remove('active');
+    document.getElementById('stepsBody').style.display = 'block';
+    document.querySelectorAll('.step').forEach(s => s.classList.remove('active'));
+    document.getElementById('step1').classList.add('active');
+    updateProgress(1);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+</script>
+
+</body>
+</html>
