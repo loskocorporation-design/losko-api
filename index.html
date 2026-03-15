@@ -7,9 +7,9 @@
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
 <style>
   :root {
-    --red: #C00000;
-    --red-dark: #8B0000;
-    --red-light: #fdf0f0;
+    --red: #6B1F3A;
+    --red-dark: #4a1528;
+    --red-light: #f9f0f4;
     --black: #1A1A1A;
     --anthracite: #3a3a3a;
     --grey: #6b6b6b;
@@ -292,6 +292,7 @@
     font-weight: 600;
   }
   .option-btn.selected::before { transform: scaleY(1); }
+  .option-btn * { pointer-events: none; }
   .option-icon { font-size: 18px; flex-shrink: 0; }
   .option-check {
     position: absolute;
@@ -627,16 +628,16 @@
         <div class="step-question">Où se situe votre projet ?</div>
         <div class="step-hint">Sélectionnez le territoire concerné par votre investissement.</div>
         <div class="options-grid">
-          <button class="option-btn" data-q="territoire" data-v="Guadeloupe" onclick="selectOption(this)">
+          <button class="option-btn" data-q="territoire" data-v="Guadeloupe" onclick="selectOption(event.currentTarget || this)">
             <span class="option-icon">🌴</span> Guadeloupe <span class="option-check"></span>
           </button>
-          <button class="option-btn" data-q="territoire" data-v="Martinique" onclick="selectOption(this)">
+          <button class="option-btn" data-q="territoire" data-v="Martinique" onclick="selectOption(event.currentTarget || this)">
             <span class="option-icon">🏝️</span> Martinique <span class="option-check"></span>
           </button>
-          <button class="option-btn" data-q="territoire" data-v="Guyane" onclick="selectOption(this)">
+          <button class="option-btn" data-q="territoire" data-v="Guyane" onclick="selectOption(event.currentTarget || this)">
             <span class="option-icon">🌿</span> Guyane <span class="option-check"></span>
           </button>
-          <button class="option-btn" data-q="territoire" data-v="Réunion" onclick="selectOption(this)">
+          <button class="option-btn" data-q="territoire" data-v="Réunion" onclick="selectOption(event.currentTarget || this)">
             <span class="option-icon">🌋</span> La Réunion <span class="option-check"></span>
           </button>
         </div>
@@ -652,14 +653,14 @@
         <div class="step-question">Quel est votre secteur d'activité ?</div>
         <div class="step-hint">Choisissez le secteur qui correspond le mieux à votre activité principale.</div>
         <div class="options-grid">
-          <button class="option-btn" data-q="secteur" data-v="Agriculture" onclick="selectOption(this)"><span class="option-icon">🌾</span> Agriculture <span class="option-check"></span></button>
-          <button class="option-btn" data-q="secteur" data-v="Agroalimentaire" onclick="selectOption(this)"><span class="option-icon">🥩</span> Agroalimentaire <span class="option-check"></span></button>
-          <button class="option-btn" data-q="secteur" data-v="Tourisme" onclick="selectOption(this)"><span class="option-icon">🏨</span> Tourisme <span class="option-check"></span></button>
-          <button class="option-btn" data-q="secteur" data-v="Commerce" onclick="selectOption(this)"><span class="option-icon">🏪</span> Commerce <span class="option-check"></span></button>
-          <button class="option-btn" data-q="secteur" data-v="Industrie" onclick="selectOption(this)"><span class="option-icon">🏭</span> Industrie <span class="option-check"></span></button>
-          <button class="option-btn" data-q="secteur" data-v="Numérique" onclick="selectOption(this)"><span class="option-icon">💻</span> Numérique <span class="option-check"></span></button>
-          <button class="option-btn" data-q="secteur" data-v="Services" onclick="selectOption(this)"><span class="option-icon">🤝</span> Services <span class="option-check"></span></button>
-          <button class="option-btn" data-q="secteur" data-v="BTP" onclick="selectOption(this)"><span class="option-icon">🏗️</span> BTP <span class="option-check"></span></button>
+          <button class="option-btn" data-q="secteur" data-v="Agriculture" onclick="selectOption(event.currentTarget || this)"><span class="option-icon">🌾</span> Agriculture <span class="option-check"></span></button>
+          <button class="option-btn" data-q="secteur" data-v="Agroalimentaire" onclick="selectOption(event.currentTarget || this)"><span class="option-icon">🥩</span> Agroalimentaire <span class="option-check"></span></button>
+          <button class="option-btn" data-q="secteur" data-v="Tourisme" onclick="selectOption(event.currentTarget || this)"><span class="option-icon">🏨</span> Tourisme <span class="option-check"></span></button>
+          <button class="option-btn" data-q="secteur" data-v="Commerce" onclick="selectOption(event.currentTarget || this)"><span class="option-icon">🏪</span> Commerce <span class="option-check"></span></button>
+          <button class="option-btn" data-q="secteur" data-v="Industrie" onclick="selectOption(event.currentTarget || this)"><span class="option-icon">🏭</span> Industrie <span class="option-check"></span></button>
+          <button class="option-btn" data-q="secteur" data-v="Numérique" onclick="selectOption(event.currentTarget || this)"><span class="option-icon">💻</span> Numérique <span class="option-check"></span></button>
+          <button class="option-btn" data-q="secteur" data-v="Services" onclick="selectOption(event.currentTarget || this)"><span class="option-icon">🤝</span> Services <span class="option-check"></span></button>
+          <button class="option-btn" data-q="secteur" data-v="BTP" onclick="selectOption(event.currentTarget || this)"><span class="option-icon">🏗️</span> BTP <span class="option-check"></span></button>
         </div>
         <div class="step-nav">
           <button class="btn-back" onclick="goBack(1)">← Retour</button>
@@ -673,12 +674,12 @@
         <div class="step-question">Quel est le type de votre projet ?</div>
         <div class="step-hint">Précisez la nature principale de votre démarche entrepreneuriale.</div>
         <div class="options-grid">
-          <button class="option-btn" data-q="typeprojet" data-v="Création d'entreprise" onclick="selectOption(this)"><span class="option-icon">🚀</span> Création d'entreprise <span class="option-check"></span></button>
-          <button class="option-btn" data-q="typeprojet" data-v="Développement" onclick="selectOption(this)"><span class="option-icon">📈</span> Développement <span class="option-check"></span></button>
-          <button class="option-btn" data-q="typeprojet" data-v="Innovation" onclick="selectOption(this)"><span class="option-icon">💡</span> Innovation <span class="option-check"></span></button>
-          <button class="option-btn" data-q="typeprojet" data-v="Transition écologique" onclick="selectOption(this)"><span class="option-icon">♻️</span> Transition écologique <span class="option-check"></span></button>
-          <button class="option-btn" data-q="typeprojet" data-v="Transformation / Production" onclick="selectOption(this)"><span class="option-icon">⚙️</span> Transformation / Production <span class="option-check"></span></button>
-          <button class="option-btn" data-q="typeprojet" data-v="Formation / Emploi" onclick="selectOption(this)"><span class="option-icon">🎓</span> Formation / Emploi <span class="option-check"></span></button>
+          <button class="option-btn" data-q="typeprojet" data-v="Création d'entreprise" onclick="selectOption(event.currentTarget || this)"><span class="option-icon">🚀</span> Création d'entreprise <span class="option-check"></span></button>
+          <button class="option-btn" data-q="typeprojet" data-v="Développement" onclick="selectOption(event.currentTarget || this)"><span class="option-icon">📈</span> Développement <span class="option-check"></span></button>
+          <button class="option-btn" data-q="typeprojet" data-v="Innovation" onclick="selectOption(event.currentTarget || this)"><span class="option-icon">💡</span> Innovation <span class="option-check"></span></button>
+          <button class="option-btn" data-q="typeprojet" data-v="Transition écologique" onclick="selectOption(event.currentTarget || this)"><span class="option-icon">♻️</span> Transition écologique <span class="option-check"></span></button>
+          <button class="option-btn" data-q="typeprojet" data-v="Transformation / Production" onclick="selectOption(event.currentTarget || this)"><span class="option-icon">⚙️</span> Transformation / Production <span class="option-check"></span></button>
+          <button class="option-btn" data-q="typeprojet" data-v="Formation / Emploi" onclick="selectOption(event.currentTarget || this)"><span class="option-icon">🎓</span> Formation / Emploi <span class="option-check"></span></button>
         </div>
         <div class="step-nav">
           <button class="btn-back" onclick="goBack(2)">← Retour</button>
@@ -692,10 +693,10 @@
         <div class="step-question">Quel est le montant de votre investissement ?</div>
         <div class="step-hint">Indiquez l'enveloppe globale de votre projet (hors taxes).</div>
         <div class="options-grid">
-          <button class="option-btn" data-q="montant" data-v="moins de 20 000 €" onclick="selectOption(this)"><span class="option-icon">💰</span> Moins de 20 000 € <span class="option-check"></span></button>
-          <button class="option-btn" data-q="montant" data-v="20 000 – 100 000 €" onclick="selectOption(this)"><span class="option-icon">💰</span> 20 000 – 100 000 € <span class="option-check"></span></button>
-          <button class="option-btn" data-q="montant" data-v="100 000 – 500 000 €" onclick="selectOption(this)"><span class="option-icon">💰</span> 100 000 – 500 000 € <span class="option-check"></span></button>
-          <button class="option-btn" data-q="montant" data-v="plus de 500 000 €" onclick="selectOption(this)"><span class="option-icon">💰</span> Plus de 500 000 € <span class="option-check"></span></button>
+          <button class="option-btn" data-q="montant" data-v="moins de 20 000 €" onclick="selectOption(event.currentTarget || this)"><span class="option-icon">💰</span> Moins de 20 000 € <span class="option-check"></span></button>
+          <button class="option-btn" data-q="montant" data-v="20 000 – 100 000 €" onclick="selectOption(event.currentTarget || this)"><span class="option-icon">💰</span> 20 000 – 100 000 € <span class="option-check"></span></button>
+          <button class="option-btn" data-q="montant" data-v="100 000 – 500 000 €" onclick="selectOption(event.currentTarget || this)"><span class="option-icon">💰</span> 100 000 – 500 000 € <span class="option-check"></span></button>
+          <button class="option-btn" data-q="montant" data-v="plus de 500 000 €" onclick="selectOption(event.currentTarget || this)"><span class="option-icon">💰</span> Plus de 500 000 € <span class="option-check"></span></button>
         </div>
         <div class="step-nav">
           <button class="btn-back" onclick="goBack(3)">← Retour</button>
@@ -709,8 +710,8 @@
         <div class="step-question">Votre entreprise existe-t-elle déjà ?</div>
         <div class="step-hint">Cela détermine les dispositifs accessibles à votre situation.</div>
         <div class="options-grid" style="grid-template-columns: 1fr 1fr;">
-          <button class="option-btn" data-q="entreprise" data-v="Oui" onclick="selectOption(this)"><span class="option-icon">✅</span> Oui, elle est créée <span class="option-check"></span></button>
-          <button class="option-btn" data-q="entreprise" data-v="Non" onclick="selectOption(this)"><span class="option-icon">🌱</span> Non, en cours de création <span class="option-check"></span></button>
+          <button class="option-btn" data-q="entreprise" data-v="Oui" onclick="selectOption(event.currentTarget || this)"><span class="option-icon">✅</span> Oui, elle est créée <span class="option-check"></span></button>
+          <button class="option-btn" data-q="entreprise" data-v="Non" onclick="selectOption(event.currentTarget || this)"><span class="option-icon">🌱</span> Non, en cours de création <span class="option-check"></span></button>
         </div>
         <div class="step-nav">
           <button class="btn-back" onclick="goBack(4)">← Retour</button>
@@ -724,10 +725,10 @@
         <div class="step-question">Combien d'employés compte votre structure ?</div>
         <div class="step-hint">Le nombre de salariés influe sur les critères d'éligibilité.</div>
         <div class="options-grid" style="grid-template-columns: repeat(2, 1fr);">
-          <button class="option-btn" data-q="effectif" data-v="0 (solo / créateur)" onclick="selectOption(this)"><span class="option-icon">👤</span> 0 — Solo / Créateur <span class="option-check"></span></button>
-          <button class="option-btn" data-q="effectif" data-v="1 à 5" onclick="selectOption(this)"><span class="option-icon">👥</span> 1 à 5 salariés <span class="option-check"></span></button>
-          <button class="option-btn" data-q="effectif" data-v="5 à 20" onclick="selectOption(this)"><span class="option-icon">👥</span> 5 à 20 salariés <span class="option-check"></span></button>
-          <button class="option-btn" data-q="effectif" data-v="plus de 20" onclick="selectOption(this)"><span class="option-icon">🏢</span> Plus de 20 salariés <span class="option-check"></span></button>
+          <button class="option-btn" data-q="effectif" data-v="0 (solo / créateur)" onclick="selectOption(event.currentTarget || this)"><span class="option-icon">👤</span> 0 — Solo / Créateur <span class="option-check"></span></button>
+          <button class="option-btn" data-q="effectif" data-v="1 à 5" onclick="selectOption(event.currentTarget || this)"><span class="option-icon">👥</span> 1 à 5 salariés <span class="option-check"></span></button>
+          <button class="option-btn" data-q="effectif" data-v="5 à 20" onclick="selectOption(event.currentTarget || this)"><span class="option-icon">👥</span> 5 à 20 salariés <span class="option-check"></span></button>
+          <button class="option-btn" data-q="effectif" data-v="plus de 20" onclick="selectOption(event.currentTarget || this)"><span class="option-icon">🏢</span> Plus de 20 salariés <span class="option-check"></span></button>
         </div>
         <div class="step-nav">
           <button class="btn-back" onclick="goBack(5)">← Retour</button>
@@ -741,11 +742,11 @@
         <div class="step-question">Votre projet concerne-t-il une thématique prioritaire ?</div>
         <div class="step-hint">Certaines thématiques ouvrent droit à des financements bonifiés.</div>
         <div class="options-grid">
-          <button class="option-btn" data-q="thematique" data-v="Innovation" onclick="selectOption(this)"><span class="option-icon">🔬</span> Innovation <span class="option-check"></span></button>
-          <button class="option-btn" data-q="thematique" data-v="Environnement" onclick="selectOption(this)"><span class="option-icon">🌱</span> Environnement <span class="option-check"></span></button>
-          <button class="option-btn" data-q="thematique" data-v="Production locale" onclick="selectOption(this)"><span class="option-icon">🏭</span> Production locale <span class="option-check"></span></button>
-          <button class="option-btn" data-q="thematique" data-v="Tourisme" onclick="selectOption(this)"><span class="option-icon">🏖️</span> Tourisme <span class="option-check"></span></button>
-          <button class="option-btn" data-q="thematique" data-v="Aucune thématique prioritaire" onclick="selectOption(this)"><span class="option-icon">➖</span> Aucune thématique prioritaire <span class="option-check"></span></button>
+          <button class="option-btn" data-q="thematique" data-v="Innovation" onclick="selectOption(event.currentTarget || this)"><span class="option-icon">🔬</span> Innovation <span class="option-check"></span></button>
+          <button class="option-btn" data-q="thematique" data-v="Environnement" onclick="selectOption(event.currentTarget || this)"><span class="option-icon">🌱</span> Environnement <span class="option-check"></span></button>
+          <button class="option-btn" data-q="thematique" data-v="Production locale" onclick="selectOption(event.currentTarget || this)"><span class="option-icon">🏭</span> Production locale <span class="option-check"></span></button>
+          <button class="option-btn" data-q="thematique" data-v="Tourisme" onclick="selectOption(event.currentTarget || this)"><span class="option-icon">🏖️</span> Tourisme <span class="option-check"></span></button>
+          <button class="option-btn" data-q="thematique" data-v="Aucune thématique prioritaire" onclick="selectOption(event.currentTarget || this)"><span class="option-icon">➖</span> Aucune thématique prioritaire <span class="option-check"></span></button>
         </div>
         <div class="step-nav">
           <button class="btn-back" onclick="goBack(6)">← Retour</button>
@@ -831,10 +832,14 @@
   // ============================================================
   // NAVIGATION
   // ============================================================
-  function selectOption(btn) {
+  function selectOption(el) {
+    // Remonter jusqu'au bouton .option-btn même si on clique sur un enfant
+    const btn = el.closest ? el.closest('.option-btn') : el;
+    if (!btn) return;
     const q = btn.dataset.q;
     const v = btn.dataset.v;
-    document.querySelectorAll(`[data-q="${q}"]`).forEach(b => b.classList.remove('selected'));
+    // Désélectionner tous les boutons du même groupe dans la même grille
+    btn.closest('.options-grid').querySelectorAll('.option-btn').forEach(b => b.classList.remove('selected'));
     btn.classList.add('selected');
     answers[q] = v;
     const stepNum = btn.closest('.step').id.replace('step','');
