@@ -1,0 +1,592 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Robot AMO FEDER — LOSKO CORPORATION</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --red: #6B1F3A;
+    --red-dark: #4a1528;
+    --red-light: #f9f0f4;
+    --black: #1A1A1A;
+    --anthracite: #3a3a3a;
+    --grey: #6b6b6b;
+    --grey-light: #f5f5f5;
+    --border: #e0e0e0;
+    --white: #ffffff;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: 'DM Sans', sans-serif; background: #f8f7f7; color: var(--black); min-height: 100vh; }
+
+  header { background: var(--black); padding: 16px 40px; display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; z-index: 100; }
+  .logo { display: flex; align-items: center; gap: 12px; text-decoration: none; }
+  .logo-badge { width: 34px; height: 34px; background: var(--red); border-radius: 6px; display: flex; align-items: center; justify-content: center; font-family: 'Playfair Display', serif; font-weight: 900; color: white; font-size: 17px; }
+  .logo-name { font-family: 'Playfair Display', serif; font-weight: 700; font-size: 15px; color: white; }
+  .logo-sub { font-size: 10px; color: #888; letter-spacing: 0.1em; text-transform: uppercase; }
+  .header-right { display: flex; align-items: center; gap: 12px; }
+  .nav-link { font-size: 13px; color: #888; text-decoration: none; padding: 6px 14px; border-radius: 6px; border: 1px solid #333; transition: all 0.2s; }
+  .nav-link:hover { color: white; border-color: #555; }
+  .header-tag { background: var(--red); color: white; font-size: 11px; font-weight: 600; padding: 5px 12px; border-radius: 20px; letter-spacing: 0.05em; text-transform: uppercase; }
+
+  .page-hero { background: var(--black); padding: 48px 40px 60px; }
+  .hero-inner { max-width: 860px; margin: 0 auto; }
+  .hero-badge { display: inline-flex; align-items: center; gap: 8px; border: 1px solid rgba(107,31,58,0.5); color: #c87a9a; font-size: 11px; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; padding: 5px 14px; border-radius: 20px; margin-bottom: 20px; }
+  .hero-dot { width: 6px; height: 6px; background: var(--red); border-radius: 50%; animation: pulse 1.5s ease-in-out infinite; }
+  @keyframes pulse { 0%,100%{opacity:1;} 50%{opacity:0.4;} }
+  .page-hero h1 { font-family: 'Playfair Display', serif; font-size: clamp(28px, 4vw, 44px); font-weight: 900; color: white; line-height: 1.15; margin-bottom: 12px; }
+  .page-hero h1 span { color: #c87a9a; }
+  .page-hero p { font-size: 16px; color: #aaa; font-weight: 300; max-width: 560px; line-height: 1.7; }
+
+  main { max-width: 860px; margin: -24px auto 60px; padding: 0 20px; }
+
+  .steps-track { display: flex; gap: 0; margin-bottom: 24px; background: white; border-radius: 12px; border: 1px solid var(--border); overflow: hidden; }
+  .step-tab { flex: 1; padding: 14px 10px; text-align: center; cursor: pointer; border-right: 1px solid var(--border); transition: all 0.2s; position: relative; }
+  .step-tab:last-child { border-right: none; }
+  .step-tab:hover { background: var(--grey-light); }
+  .step-tab.active { background: var(--red-light); }
+  .step-tab.active::after { content: ''; position: absolute; bottom: 0; left: 0; right: 0; height: 3px; background: var(--red); }
+  .step-tab.done .tab-num { background: var(--red); color: white; }
+  .tab-num { width: 22px; height: 22px; background: var(--grey-light); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 700; color: var(--grey); margin: 0 auto 5px; transition: all 0.2s; }
+  .step-tab.active .tab-num { background: var(--red); color: white; }
+  .tab-label { font-size: 11px; color: var(--grey); font-weight: 500; line-height: 1.3; }
+  .step-tab.active .tab-label { color: var(--red); font-weight: 600; }
+
+  .panel { display: none; }
+  .panel.active { display: block; animation: fadeIn 0.3s ease; }
+  @keyframes fadeIn { from{opacity:0;transform:translateY(8px);} to{opacity:1;transform:translateY(0);} }
+
+  .card { background: white; border-radius: 12px; border: 1px solid var(--border); padding: 28px 32px; margin-bottom: 16px; }
+  .card-label { font-size: 11px; font-weight: 600; color: var(--red); letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 10px; }
+  .card h3 { font-family: 'Playfair Display', serif; font-size: 22px; font-weight: 700; color: var(--black); margin-bottom: 6px; }
+  .card-desc { font-size: 14px; color: var(--grey); margin-bottom: 20px; line-height: 1.6; }
+
+  .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px; }
+  .form-group { display: flex; flex-direction: column; }
+  .form-group.full { grid-column: 1 / -1; }
+  label { font-size: 13px; font-weight: 500; color: var(--anthracite); margin-bottom: 5px; }
+  input, select, textarea { font-family: 'DM Sans', sans-serif; font-size: 14px; color: var(--black); background: var(--grey-light); border: 1px solid var(--border); border-radius: 8px; padding: 10px 14px; transition: border-color 0.2s; width: 100%; }
+  input:focus, select:focus, textarea:focus { outline: none; border-color: var(--red); background: white; }
+  textarea { min-height: 90px; resize: vertical; }
+
+  .btn-row { display: flex; gap: 10px; margin-top: 20px; flex-wrap: wrap; }
+  .btn-primary { background: var(--red); color: white; border: none; padding: 12px 24px; border-radius: 8px; cursor: pointer; font-family: 'DM Sans', sans-serif; font-size: 14px; font-weight: 600; transition: all 0.2s; }
+  .btn-primary:hover { background: var(--red-dark); transform: translateY(-1px); }
+  .btn-secondary { background: white; color: var(--anthracite); border: 1px solid var(--border); padding: 12px 20px; border-radius: 8px; cursor: pointer; font-family: 'DM Sans', sans-serif; font-size: 14px; transition: all 0.2s; }
+  .btn-secondary:hover { border-color: var(--anthracite); }
+  .btn-ai { background: var(--black); color: white; border: none; padding: 12px 24px; border-radius: 8px; cursor: pointer; font-family: 'DM Sans', sans-serif; font-size: 14px; font-weight: 600; transition: all 0.2s; display: flex; align-items: center; gap: 8px; }
+  .btn-ai:hover { background: #333; }
+  .ai-dot-btn { width: 8px; height: 8px; background: #c87a9a; border-radius: 50%; animation: pulse 1.5s ease-in-out infinite; }
+
+  .result-card { background: white; border-radius: 12px; border: 1px solid var(--border); overflow: hidden; margin-bottom: 16px; }
+  .result-card-header { background: var(--grey-light); padding: 14px 24px; display: flex; align-items: center; gap: 10px; border-bottom: 1px solid var(--border); }
+  .result-card-title { font-size: 13px; font-weight: 600; color: var(--anthracite); }
+  .result-body { padding: 24px; }
+  .ai-text { font-size: 14px; color: var(--anthracite); line-height: 1.8; white-space: pre-wrap; }
+  .ai-text.loading { color: var(--grey); font-style: italic; }
+  .ai-textarea { font-family: 'DM Sans', sans-serif; font-size: 14px; color: var(--black); background: var(--grey-light); border: 1px solid var(--border); border-radius: 8px; padding: 14px; min-height: 220px; resize: vertical; width: 100%; line-height: 1.8; }
+
+  .stat-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 20px; }
+  .stat-card { background: var(--grey-light); border-radius: 10px; padding: 16px; }
+  .stat-val { font-family: 'Playfair Display', serif; font-size: 24px; font-weight: 700; color: var(--black); }
+  .stat-lbl { font-size: 12px; color: var(--grey); margin-top: 4px; }
+  .stat-card.highlight .stat-val { color: var(--red); }
+
+  .meter-wrap { margin-bottom: 6px; }
+  .meter { height: 6px; background: var(--grey-light); border-radius: 3px; overflow: hidden; margin-bottom: 6px; border: 1px solid var(--border); }
+  .meter-fill { height: 100%; background: var(--red); border-radius: 3px; transition: width 0.4s; }
+  .meter-label { font-size: 13px; color: var(--grey); margin-bottom: 16px; }
+
+  .checklist { list-style: none; padding: 0; }
+  .check-item { display: flex; align-items: flex-start; gap: 12px; padding: 12px 0; border-bottom: 1px solid var(--border); cursor: pointer; transition: background 0.15s; }
+  .check-item:last-child { border-bottom: none; }
+  .check-item:hover { background: var(--grey-light); margin: 0 -8px; padding-left: 8px; padding-right: 8px; border-radius: 6px; }
+  .check-box { width: 20px; height: 20px; border: 2px solid var(--border); border-radius: 5px; flex-shrink: 0; display: flex; align-items: center; justify-content: center; margin-top: 1px; transition: all 0.2s; }
+  .check-box.done { background: var(--red); border-color: var(--red); }
+  .check-box.done::after { content: '✓'; font-size: 12px; color: white; font-weight: 700; }
+  .check-text { font-size: 14px; color: var(--anthracite); line-height: 1.5; }
+  .check-item.done-item .check-text { text-decoration: line-through; color: var(--grey); }
+
+  .info-box { background: var(--red-light); border-left: 4px solid var(--red); border-radius: 0 8px 8px 0; padding: 14px 18px; margin-bottom: 20px; font-size: 14px; color: var(--red-dark); line-height: 1.6; }
+
+  footer { background: var(--black); padding: 32px 40px; text-align: center; }
+  .footer-logo { font-family: 'Playfair Display', serif; font-size: 18px; font-weight: 700; color: white; margin-bottom: 6px; }
+  .footer-logo span { color: #c87a9a; }
+  .footer-sub { font-size: 12px; color: #666; }
+
+  @media (max-width: 640px) {
+    header { padding: 14px 20px; }
+    .page-hero { padding: 36px 20px 50px; }
+    main { padding: 0 12px; }
+    .card { padding: 20px; }
+    .form-grid { grid-template-columns: 1fr; }
+    .stat-grid { grid-template-columns: 1fr; }
+    .steps-track { display: none; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <a class="logo" href="index.html">
+    <div class="logo-badge">L</div>
+    <div>
+      <div class="logo-name">LOSKO CORPORATION</div>
+      <div class="logo-sub">Assistance à Maîtrise d'Ouvrage</div>
+    </div>
+  </a>
+  <div class="header-right">
+    <a href="index.html" class="nav-link">← Simulateur</a>
+    <div class="header-tag">Robot AMO</div>
+  </div>
+</header>
+
+<div class="page-hero">
+  <div class="hero-inner">
+    <div class="hero-badge"><div class="hero-dot"></div>Intelligence artificielle · FEDER DOM-TOM</div>
+    <h1>Robot AMO <span>FEDER</span></h1>
+    <p>Analysez l'éligibilité, rédigez la note de présentation, générez le plan de financement et constituez votre dossier — guidé par l'IA LOSKO.</p>
+  </div>
+</div>
+
+<main>
+  <div class="steps-track">
+    <div class="step-tab active" onclick="goTo(0)" id="tab0"><div class="tab-num">1</div><div class="tab-label">Identification</div></div>
+    <div class="step-tab" onclick="goTo(1)" id="tab1"><div class="tab-num">2</div><div class="tab-label">Eligibilité</div></div>
+    <div class="step-tab" onclick="goTo(2)" id="tab2"><div class="tab-num">3</div><div class="tab-label">Note de présentation</div></div>
+    <div class="step-tab" onclick="goTo(3)" id="tab3"><div class="tab-num">4</div><div class="tab-label">Plan de financement</div></div>
+    <div class="step-tab" onclick="goTo(4)" id="tab4"><div class="tab-num">5</div><div class="tab-label">Pièces & suivi</div></div>
+  </div>
+
+  <!-- PANEL 1 : IDENTIFICATION -->
+  <div class="panel active" id="panel0">
+    <div class="card">
+      <div class="card-label">Étape 1 / 5</div>
+      <h3>Identification du projet</h3>
+      <p class="card-desc">Renseignez les informations de base sur votre structure et votre projet d'investissement.</p>
+      <div class="form-grid">
+        <div class="form-group">
+          <label>Nom du porteur / structure</label>
+          <input id="porteur" type="text" placeholder="Ex : SARL KARIBU INVEST">
+        </div>
+        <div class="form-group">
+          <label>Territoire</label>
+          <select id="territoire">
+            <option value="">Sélectionner...</option>
+            <option>Guadeloupe</option>
+            <option>Martinique</option>
+            <option>Guyane</option>
+            <option>La Réunion</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Secteur d'activité</label>
+          <select id="secteur">
+            <option value="">Sélectionner...</option>
+            <option>Agriculture / Agroalimentaire</option>
+            <option>Tourisme / Hôtellerie</option>
+            <option>Industrie / BTP</option>
+            <option>Numérique / Innovation</option>
+            <option>Commerce / Services</option>
+            <option>Environnement / Énergie</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Montant total du projet (€ HT)</label>
+          <input id="montant" type="number" placeholder="Ex : 350000">
+        </div>
+        <div class="form-group full">
+          <label>Intitulé du projet</label>
+          <input id="intitule" type="text" placeholder="Ex : Extension et modernisation de l'unité de transformation agroalimentaire">
+        </div>
+        <div class="form-group full">
+          <label>Description du projet</label>
+          <textarea id="description" placeholder="Décrivez en 2-3 phrases votre projet, ses objectifs principaux et le contexte économique..."></textarea>
+        </div>
+      </div>
+      <div class="btn-row">
+        <button class="btn-primary" onclick="nextStep(0)">Étape suivante : Éligibilité →</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- PANEL 2 : ELIGIBILITÉ -->
+  <div class="panel" id="panel1">
+    <div class="card">
+      <div class="card-label">Étape 2 / 5</div>
+      <h3>Analyse d'éligibilité FEDER</h3>
+      <p class="card-desc">Précisez les caractéristiques de votre projet pour que l'IA analyse son éligibilité aux dispositifs FEDER et aides DOM disponibles.</p>
+      <div class="form-grid">
+        <div class="form-group">
+          <label>Type de projet</label>
+          <select id="typeprojet">
+            <option value="">Sélectionner...</option>
+            <option>Création d'entreprise</option>
+            <option>Développement / Extension</option>
+            <option>Innovation / R&D</option>
+            <option>Transition écologique</option>
+            <option>Transformation / Production</option>
+            <option>Formation / Emploi</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>L'entreprise existe-t-elle déjà ?</label>
+          <select id="entreprise">
+            <option value="">Sélectionner...</option>
+            <option>Oui — en activité</option>
+            <option>Non — en création</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Effectif actuel</label>
+          <select id="effectif">
+            <option value="">Sélectionner...</option>
+            <option>0 (créateur solo)</option>
+            <option>1 à 5 salariés</option>
+            <option>5 à 20 salariés</option>
+            <option>Plus de 20 salariés</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Thématique prioritaire</label>
+          <select id="thematique">
+            <option value="">Sélectionner...</option>
+            <option>Innovation</option>
+            <option>Environnement / Écologie</option>
+            <option>Production locale</option>
+            <option>Tourisme</option>
+            <option>Aucune thématique prioritaire</option>
+          </select>
+        </div>
+      </div>
+      <div class="btn-row">
+        <button class="btn-ai" onclick="analyzeEligibilite()"><div class="ai-dot-btn"></div>Analyser l'éligibilité par l'IA</button>
+        <button class="btn-secondary" onclick="goTo(0)">← Retour</button>
+      </div>
+    </div>
+
+    <div class="result-card" id="eligCard" style="display:none">
+      <div class="result-card-header">
+        <div class="hero-dot"></div>
+        <div class="result-card-title">Analyse d'éligibilité — IA LOSKO CORPORATION</div>
+      </div>
+      <div class="result-body">
+        <div class="ai-text loading" id="eligText">Analyse en cours...</div>
+        <div class="btn-row" style="margin-top:16px">
+          <button class="btn-primary" onclick="nextStep(1)">Continuer → Note de présentation</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- PANEL 3 : NOTE DE PRÉSENTATION -->
+  <div class="panel" id="panel2">
+    <div class="card">
+      <div class="card-label">Étape 3 / 5</div>
+      <h3>Note de présentation du projet</h3>
+      <p class="card-desc">L'IA va rédiger la note de présentation officielle de votre dossier FEDER. Complétez les informations complémentaires ci-dessous.</p>
+      <div class="info-box">La note de présentation est le document central du dossier. Elle doit convaincre les instructeurs de la pertinence et de la viabilité du projet.</div>
+      <div class="form-grid">
+        <div class="form-group">
+          <label>Objectif principal du projet</label>
+          <input id="objectif" type="text" placeholder="Ex : Augmenter la capacité de production de 40%">
+        </div>
+        <div class="form-group">
+          <label>Impact attendu (emplois, CA...)</label>
+          <input id="impact" type="text" placeholder="Ex : Création de 5 emplois, +200k€ de CA annuel">
+        </div>
+        <div class="form-group full">
+          <label>Points forts et différenciants du projet</label>
+          <textarea id="pointsforts" placeholder="Ex : Première unité de transformation certifiée bio en Guadeloupe, fort ancrage local, débouchés export vers les Antilles..."></textarea>
+        </div>
+      </div>
+      <div class="btn-row">
+        <button class="btn-ai" onclick="genererNote()"><div class="ai-dot-btn"></div>Rédiger la note par l'IA</button>
+        <button class="btn-secondary" onclick="goTo(1)">← Retour</button>
+      </div>
+    </div>
+
+    <div class="result-card" id="noteCard" style="display:none">
+      <div class="result-card-header">
+        <div class="hero-dot"></div>
+        <div class="result-card-title">Note de présentation générée — modifiable</div>
+      </div>
+      <div class="result-body">
+        <textarea class="ai-textarea" id="noteText"></textarea>
+        <div class="btn-row" style="margin-top:12px">
+          <button class="btn-primary" onclick="nextStep(2)">Continuer → Plan de financement</button>
+          <button class="btn-secondary" onclick="genererNote()">Régénérer</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- PANEL 4 : PLAN DE FINANCEMENT -->
+  <div class="panel" id="panel3">
+    <div class="card">
+      <div class="card-label">Étape 4 / 5</div>
+      <h3>Plan de financement prévisionnel</h3>
+      <p class="card-desc">Calculez automatiquement la répartition du financement et générez le plan formel pour votre dossier.</p>
+      <div class="stat-grid" id="statsFinancement"></div>
+      <div class="form-grid">
+        <div class="form-group">
+          <label>Autofinancement prévu (€)</label>
+          <input id="autofinancement" type="number" placeholder="Ex : 87500" oninput="calcFinancement()">
+        </div>
+        <div class="form-group">
+          <label>Prêt bancaire prévu (€)</label>
+          <input id="pret" type="number" placeholder="Ex : 175000" oninput="calcFinancement()">
+        </div>
+      </div>
+      <div id="equilibreBox" style="display:none" class="info-box" id="equilibreMsg"></div>
+      <div class="btn-row">
+        <button class="btn-ai" onclick="genererPlan()"><div class="ai-dot-btn"></div>Générer le plan complet par l'IA</button>
+        <button class="btn-secondary" onclick="goTo(2)">← Retour</button>
+      </div>
+    </div>
+
+    <div class="result-card" id="planCard" style="display:none">
+      <div class="result-card-header">
+        <div class="hero-dot"></div>
+        <div class="result-card-title">Plan de financement rédigé — LOSKO CORPORATION</div>
+      </div>
+      <div class="result-body">
+        <div class="ai-text loading" id="planText">Génération en cours...</div>
+        <div class="btn-row" style="margin-top:16px">
+          <button class="btn-primary" onclick="nextStep(3)">Continuer → Pièces à fournir</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- PANEL 5 : PIÈCES & SUIVI -->
+  <div class="panel" id="panel4">
+    <div class="card">
+      <div class="card-label">Étape 5 / 5</div>
+      <h3>Pièces à fournir et suivi du dossier</h3>
+      <p class="card-desc">Cochez les pièces au fur et à mesure de leur collecte. Suivez l'avancement de votre dossier.</p>
+      <div class="meter-wrap">
+        <div class="meter"><div class="meter-fill" id="meterFill" style="width:0%"></div></div>
+        <div class="meter-label" id="meterLabel">0 pièce collectée sur 12</div>
+      </div>
+      <ul class="checklist" id="checklist"></ul>
+      <div class="btn-row" style="margin-top:20px">
+        <button class="btn-ai" onclick="contactLosko()"><div class="ai-dot-btn"></div>Être accompagné par LOSKO CORPORATION</button>
+        <button class="btn-secondary" onclick="goTo(3)">← Retour</button>
+      </div>
+    </div>
+
+    <div class="card" style="background: var(--black); border-color: var(--black);">
+      <div class="card-label" style="color:#c87a9a;">Récapitulatif du dossier</div>
+      <h3 style="color:white; margin-bottom:16px;">Votre dossier FEDER en résumé</h3>
+      <div id="recapContent" style="font-size:14px; color:#aaa; line-height:2;"></div>
+      <div class="btn-row" style="margin-top:20px">
+        <button class="btn-primary" onclick="window.print()">🖨️ Imprimer / Sauvegarder</button>
+        <a href="index.html" style="text-decoration:none"><button class="btn-secondary" style="color:#aaa;border-color:#444;">← Retour au simulateur</button></a>
+      </div>
+    </div>
+  </div>
+
+</main>
+
+<footer>
+  <div class="footer-logo">LOSKO <span>CORPORATION</span></div>
+  <div class="footer-sub">23 Résidence l'Orée du Domaine · 97139 Les Abymes · Guadeloupe<br>loskocorporation@gmail.com · 06 90 40 02 20</div>
+</footer>
+
+<script>
+const API = 'https://losko-api1.onrender.com/analyze';
+
+const pieces = [
+  "Extrait Kbis ou inscription RM (moins de 3 mois)",
+  "Statuts de la société à jour",
+  "3 derniers bilans comptables",
+  "Attestation de régularité fiscale (DGFiP)",
+  "Attestation de régularité sociale (URSSAF)",
+  "RIB de la structure bénéficiaire",
+  "Note de présentation du projet",
+  "Plan de financement prévisionnel sur 3 ans",
+  "Devis des investissements prévus (3 devis comparatifs)",
+  "Justificatif d'autofinancement (relevé bancaire récent)",
+  "Déclaration sur l'honneur aides de minimis",
+  "Lettre de demande au Président du Conseil Régional",
+];
+
+let currentPanel = 0;
+
+function goTo(n) {
+  document.querySelectorAll('.panel').forEach(function(p) { p.classList.remove('active'); });
+  document.querySelectorAll('.step-tab').forEach(function(t) { t.classList.remove('active'); });
+  document.getElementById('panel' + n).classList.add('active');
+  document.getElementById('tab' + n).classList.add('active');
+  currentPanel = n;
+  if (n === 3) initFinancement();
+  if (n === 4) { initChecklist(); buildRecap(); }
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function nextStep(from) {
+  document.getElementById('tab' + from).classList.add('done');
+  goTo(from + 1);
+}
+
+function getCtx() {
+  return {
+    porteur: document.getElementById('porteur').value || '[Porteur]',
+    territoire: document.getElementById('territoire').value || 'Guadeloupe',
+    secteur: document.getElementById('secteur').value || '[Secteur]',
+    montant: document.getElementById('montant').value || '0',
+    intitule: document.getElementById('intitule').value || '[Projet]',
+    description: document.getElementById('description').value || '',
+    typeprojet: document.getElementById('typeprojet').value || '',
+    entreprise: document.getElementById('entreprise').value || '',
+    effectif: document.getElementById('effectif').value || '',
+    thematique: document.getElementById('thematique').value || '',
+  };
+}
+
+async function callAPI(prompt) {
+  try {
+    var r = await fetch(API, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ prompt: prompt })
+    });
+    var d = await r.json();
+    return d.result || d.content || null;
+  } catch(e) { return null; }
+}
+
+async function analyzeEligibilite() {
+  var c = getCtx();
+  document.getElementById('eligCard').style.display = 'block';
+  var el = document.getElementById('eligText');
+  el.className = 'ai-text loading';
+  el.textContent = 'Analyse en cours…';
+
+  var prompt = 'Tu es expert AMO FEDER pour LOSKO CORPORATION Guadeloupe. Analyse l\'éligibilité FEDER de ce projet :\n- Porteur : ' + c.porteur + ' | Territoire : ' + c.territoire + ' | Secteur : ' + c.secteur + '\n- Type : ' + c.typeprojet + ' | Montant : ' + c.montant + '€ HT | Entreprise : ' + c.entreprise + ' | Effectif : ' + c.effectif + ' | Thématique : ' + c.thematique + '\n\nRédige en 5 phrases structurées : (1) Verdict d\'éligibilité clair, (2) Dispositifs FEDER/aides applicables avec taux estimé, (3) Conditions spécifiques à respecter, (4) Points de vigilance, (5) Recommandation concrète d\'étape suivante. Ton professionnel AMO.';
+
+  var result = await callAPI(prompt);
+  el.className = 'ai-text';
+  el.textContent = result || 'Le projet ' + c.intitule + ' porté par ' + c.porteur + ' présente un profil éligible au FEDER ' + c.territoire + '. Sur la base du secteur ' + c.secteur + ' et du type ' + c.typeprojet + ', les dispositifs FEDER investissement productif s\'appliquent avec un taux estimé entre 40% et 65%. Condition clé : autofinancement minimum de 25% du coût total requis. Point de vigilance : les dépenses doivent être engagées après notification de la décision d\'attribution. Recommandation : déposer le dossier sur la prochaine fenêtre de dépôt via le portail dédié.';
+}
+
+async function genererNote() {
+  var c = getCtx();
+  var objectif = document.getElementById('objectif').value || 'Développer l\'activité';
+  var impact = document.getElementById('impact').value || 'Impact économique positif';
+  var pointsforts = document.getElementById('pointsforts').value || 'Ancrage territorial fort';
+
+  document.getElementById('noteCard').style.display = 'block';
+  document.getElementById('noteText').value = 'Rédaction en cours…';
+
+  var prompt = 'Tu es expert AMO rédacteur de dossiers FEDER pour LOSKO CORPORATION. Rédige une note de présentation professionnelle pour une demande FEDER.\n\nDonnées :\n- Porteur : ' + c.porteur + ' | Territoire : ' + c.territoire + ' | Secteur : ' + c.secteur + '\n- Intitulé : ' + c.intitule + ' | Montant : ' + c.montant + '€ HT\n- Description : ' + c.description + '\n- Objectif : ' + objectif + '\n- Impact : ' + impact + '\n- Points forts : ' + pointsforts + '\n\nRédige en 4 paragraphes avec titres : 1/ Présentation du porteur et de la structure, 2/ Description détaillée du projet et de ses objectifs, 3/ Impact économique et social attendu sur le territoire, 4/ Cohérence avec les objectifs stratégiques du PO FEDER DOM 2021-2027. Style formel de dossier de financement public français.';
+
+  var result = await callAPI(prompt);
+  document.getElementById('noteText').value = result || '1/ PRÉSENTATION DU PORTEUR\n' + c.porteur + ' est une structure implantée en ' + c.territoire + ', active dans le secteur ' + c.secteur + '.\n\n2/ DESCRIPTION DU PROJET\n' + c.intitule + ' — ' + c.description + '\n\n3/ IMPACT ATTENDU\n' + impact + '\n\n4/ COHÉRENCE FEDER\nCe projet s\'inscrit dans les objectifs du PO FEDER ' + c.territoire + ' 2021-2027, notamment l\'axe compétitivité des PME.';
+}
+
+function initFinancement() {
+  var montant = parseFloat(document.getElementById('montant').value) || 0;
+  var feder = Math.round(montant * 0.50);
+  var reste = montant - feder;
+  document.getElementById('statsFinancement').innerHTML =
+    '<div class="stat-card"><div class="stat-val">' + montant.toLocaleString('fr-FR') + ' €</div><div class="stat-lbl">Coût total du projet</div></div>' +
+    '<div class="stat-card highlight"><div class="stat-val">' + feder.toLocaleString('fr-FR') + ' €</div><div class="stat-lbl">FEDER estimé (50%)</div></div>' +
+    '<div class="stat-card"><div class="stat-val">' + reste.toLocaleString('fr-FR') + ' €</div><div class="stat-lbl">Reste à financer</div></div>';
+}
+
+function calcFinancement() {
+  var montant = parseFloat(document.getElementById('montant').value) || 0;
+  var auto = parseFloat(document.getElementById('autofinancement').value) || 0;
+  var pret = parseFloat(document.getElementById('pret').value) || 0;
+  var feder = Math.round(montant * 0.50);
+  var total = auto + pret + feder;
+  var ecart = montant - total;
+  var box = document.getElementById('equilibreBox');
+  box.style.display = 'block';
+  if (ecart > 0) {
+    box.textContent = 'Écart à combler : ' + ecart.toLocaleString('fr-FR') + ' €. Pensez à des aides complémentaires (ARICE, BPI, ADEME...).';
+    box.style.borderLeftColor = '#D4AC0D';
+    box.style.background = '#FEF9E7';
+    box.style.color = '#7D6608';
+  } else {
+    box.textContent = 'Plan de financement équilibré ✓ — Total mobilisé : ' + total.toLocaleString('fr-FR') + ' €';
+    box.style.borderLeftColor = '#1E8449';
+    box.style.background = '#D5F5E3';
+    box.style.color = '#1E8449';
+  }
+}
+
+async function genererPlan() {
+  var c = getCtx();
+  var auto = document.getElementById('autofinancement').value || '0';
+  var pret = document.getElementById('pret').value || '0';
+  var montant = parseFloat(c.montant) || 0;
+  var feder = Math.round(montant * 0.50);
+
+  document.getElementById('planCard').style.display = 'block';
+  var el = document.getElementById('planText');
+  el.className = 'ai-text loading';
+  el.textContent = 'Génération du plan en cours…';
+
+  var prompt = 'Tu es expert AMO LOSKO CORPORATION. Rédige un plan de financement formel et complet pour ce dossier FEDER :\nProjet : ' + c.intitule + ' | Porteur : ' + c.porteur + ' | Territoire : ' + c.territoire + '\nMontant total : ' + c.montant + ' € HT | FEDER estimé : ' + feder + ' € (50%) | Autofinancement : ' + auto + ' € | Prêt bancaire : ' + pret + ' €\n\nRédige : (1) tableau de répartition du financement avec pourcentages, (2) justification de chaque source, (3) règle des minimis si applicable, (4) conditions de versement FEDER. Format professionnel dossier instruction.';
+
+  var result = await callAPI(prompt);
+  el.className = 'ai-text';
+  el.textContent = result || 'PLAN DE FINANCEMENT — ' + c.intitule + '\n\nCOÛT TOTAL ÉLIGIBLE : ' + montant.toLocaleString('fr-FR') + ' € HT\n\nRÉPARTITION DU FINANCEMENT :\n• Subvention FEDER (50%) : ' + feder.toLocaleString('fr-FR') + ' €\n• Autofinancement (25%) : ' + parseFloat(auto).toLocaleString('fr-FR') + ' €\n• Prêt bancaire (25%) : ' + parseFloat(pret).toLocaleString('fr-FR') + ' €\n\nCONDITIONS : Les dépenses éligibles doivent être engagées après notification de la décision. Autofinancement minimum 25% requis sans aide publique. Règle de minimis applicable si cumul d\'aides < 300 000 € sur 3 exercices.';
+}
+
+function initChecklist() {
+  var ul = document.getElementById('checklist');
+  ul.innerHTML = '';
+  pieces.forEach(function(p, i) {
+    var li = document.createElement('li');
+    li.className = 'check-item';
+    li.id = 'item' + i;
+    li.innerHTML = '<div class="check-box" id="chk' + i + '"></div><span class="check-text">' + p + '</span>';
+    li.addEventListener('click', function() { toggleCheck(i); });
+    ul.appendChild(li);
+  });
+  updateMeter();
+}
+
+function toggleCheck(i) {
+  var box = document.getElementById('chk' + i);
+  var item = document.getElementById('item' + i);
+  box.classList.toggle('done');
+  item.classList.toggle('done-item');
+  updateMeter();
+}
+
+function updateMeter() {
+  var done = document.querySelectorAll('.check-box.done').length;
+  var total = pieces.length;
+  var pct = Math.round((done / total) * 100);
+  document.getElementById('meterFill').style.width = pct + '%';
+  document.getElementById('meterLabel').textContent = done + ' pièce' + (done > 1 ? 's' : '') + ' collectée' + (done > 1 ? 's' : '') + ' sur ' + total + ' — ' + pct + '% du dossier constitué';
+}
+
+function buildRecap() {
+  var c = getCtx();
+  var montant = parseFloat(c.montant) || 0;
+  var feder = Math.round(montant * 0.50);
+  document.getElementById('recapContent').innerHTML =
+    '<b style="color:white">Porteur :</b> ' + c.porteur + '<br>' +
+    '<b style="color:white">Territoire :</b> ' + c.territoire + '<br>' +
+    '<b style="color:white">Secteur :</b> ' + c.secteur + '<br>' +
+    '<b style="color:white">Projet :</b> ' + c.intitule + '<br>' +
+    '<b style="color:white">Montant total :</b> ' + montant.toLocaleString('fr-FR') + ' € HT<br>' +
+    '<b style="color:#c87a9a">Subvention FEDER estimée :</b> ' + feder.toLocaleString('fr-FR') + ' €<br>' +
+    '<b style="color:white">Type :</b> ' + c.typeprojet + '<br>' +
+    '<b style="color:white">Accompagnement :</b> LOSKO CORPORATION — loskocorporation@gmail.com';
+}
+
+function contactLosko() {
+  var c = getCtx();
+  window.location.href = 'mailto:loskocorporation@gmail.com?subject=Dossier FEDER — ' + c.intitule + '&body=Bonjour,%0A%0AJe souhaite être accompagné par LOSKO CORPORATION pour mon dossier FEDER.%0A%0APorteur : ' + c.porteur + '%0AProjet : ' + c.intitule + '%0ATerritoire : ' + c.territoire + '%0AMontant : ' + c.montant + ' € HT%0A%0ACordialement';
+}
+</script>
+</body>
+</html>
