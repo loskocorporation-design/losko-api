@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Simulateur FEDER – LOSKO CORPORATION</title>
+<style>
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:'Segoe UI',Arial,sans-serif;background:#F7F2F4;min-height:100vh;padding:1.5rem 1rem;color:#2A0E18}
+  .wrap{max-width:660px;margin:0 auto}
+  .header{background:#6B1A3A;border-radius:12px;padding:1rem 1.5rem;margin-bottom:28px;display:flex;align-items:center;gap:14px}
+  .logo{width:42px;height:42px;border-radius:8px;background:#C8A84B;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:16px;color:#4E1129;flex-shrink:0}
+  .header-title{color:#fff;font-weight:500;font-size:15px;letter-spacing:1px}
+  .header-sub{color:#E8D28B;font-size:12px}
+  .header-conf{margin-left:auto;color:#E8D28B;font-size:10px;letter-spacing:1px;text-transform:uppercase}
+  .card{background:#fff;border-radius:12px;border:0.5px solid #e0cdd3;padding:1.5rem}
+  .progress{display:flex;align-items:center;margin-bottom:32px}
+  .step-wrap{display:flex;flex-direction:column;align-items:center;gap:4px}
+  .step-circle{width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:500;border:2px solid}
+  .step-label{font-size:11px;white-space:nowrap}
+  .step-line{flex:1;height:2px;margin:0 4px;margin-bottom:20px}
+  label{display:block;font-size:13px;color:#7A5060;margin-bottom:6px;font-weight:500}
+  select,textarea{width:100%;border:1px solid #d0b8c0;border-radius:8px;padding:8px 12px;font-size:14px;font-family:inherit;background:#fff;color:#2A0E18;margin-bottom:20px}
+  textarea{height:80px;resize:vertical}
+  .btn{border-radius:8px;padding:10px 20px;font-size:14px;font-weight:500;cursor:pointer;font-family:inherit;transition:opacity .2s}
+  .btn:disabled{opacity:.4;cursor:not-allowed}
+  .btn-primary{background:#6B1A3A;color:#fff;border:none}
+  .btn-secondary{background:transparent;color:#7A5060;border:1px solid #d0b8c0}
+  .btn-gold{background:#C8A84B;color:#4E1129;border:none}
+  .nav{display:flex;gap:12px;margin-top:24px}
+  .score-box{background:linear-gradient(135deg,#6B1A3A,#8B2A4A);border-radius:10px;padding:1.25rem;margin-bottom:20px;color:#fff;display:flex;align-items:center;gap:20px}
+  .score-num{font-size:40px;font-weight:500}
+  .score-bar-bg{height:6px;background:rgba(255,255,255,.2);border-radius:3px;overflow:hidden;margin:8px 0 4px}
+  .score-bar{height:100%;border-radius:3px;background:#C8A84B}
+  .prog-item{border:0.5px solid #e0cdd3;border-radius:8px;padding:10px 14px;margin-bottom:8px}
+  .prog-badge{font-size:11px;padding:2px 8px;border-radius:4px;font-weight:500;white-space:nowrap}
+  .reco-box{background:#fbf6f8;border:0.5px solid #e0cdd3;border-left:3px solid #6B1A3A;border-radius:8px;padding:1rem 1.25rem;margin-bottom:20px}
+  .reco-tag{width:20px;height:20px;border-radius:4px;background:#6B1A3A;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:#C8A84B}
+  .cta-box{background:#6B1A3A;border-radius:10px;padding:1.25rem 1.5rem;text-align:center}
+  .spinner{width:48px;height:48px;border:3px solid #E8D28B;border-top:3px solid #6B1A3A;border-radius:50%;animation:spin 1s linear infinite;margin:0 auto 16px}
+  @keyframes spin{to{transform:rotate(360deg)}}
+  .footer{text-align:center;margin-top:16px;font-size:11px;color:#7A5060}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="header">
+    <div class="logo">L</div>
+    <div>
+      <div class="header-title">LOSKO CORPORATION</div>
+      <div class="header-sub">Conseil & Management — Simulateur FEDER</div>
+    </div>
+    <div class="header-conf">Confidentiel</div>
+  </div>
+
+  <div class="card">
+    <div class="progress" id="progress"></div>
+    <div id="app"></div>
+  </div>
+
+  <div class="footer">LOSKO CORPORATION — Les Abymes, Guadeloupe — Document confidentiel</div>
+</div>
+
+<script>
+const API_URL = "https://losko-api1.onrender.com/analyze";
+const STEPS = ["Projet","Structure","Financement","Résultat"];
+const SECTEURS = ["Agriculture / Agroalimentaire","BTP / Construction","Commerce / Distribution","Énergie / Environnement","Hôtellerie / Tourisme","Industrie / Manufacture","Innovation / Numérique / Tech","Santé / Social","Services aux entreprises","Transport / Logistique","Autre"];
+const TYPES = ["Création d'entreprise","Extension / Développement","Modernisation / Équipement","Transition numérique","Transition énergétique","R&D / Innovation","Immobilier professionnel"];
+const STATUTS = ["TPE (< 10 salariés)","PME (10–249 salariés)","ETI / Grande entreprise","Association / Fondation","Collectivité / Établissement public","Porteur de projet individuel"];
+const TRANCHES = ["Moins de 50 000 €","50 000 € – 200 000 €","200 000 € – 500 000 €","500 000 € – 1 000 000 €","1 000 000 € – 5 000 000 €","Plus de 5 000 000 €"];
+const LOCS = ["Guadeloupe","Martinique","Guyane","La Réunion","Mayotte","France métropolitaine","Autre"];
+
+let step = 0;
+let form = {secteur:"",type:"",localisation:"",statut:"",montant:"",description:""};
+
+function sel(id){return document.getElementById(id)}
+function val(id){return sel(id)?sel(id).value:""}
+
+function renderProgress(){
+  const p = document.getElementById("progress");
+  p.innerHTML = STEPS.map((s,i)=>{
+    const done = i<step, active = i===step;
+    const bg = done?"#C8A84B":active?"#6B1A3A":"transparent";
+    const bc = done?"#C8A84B":active?"#6B1A3A":"#cbb0b8";
+    const col = done||active?"#fff":"#7A5060";
+    const lbl = done||active?"#6B1A3A":"#7A5060";
+    const lbw = active?"500":"400";
+    const line = i<STEPS.length-1?`<div class="step-line" style="background:${i<step?"#C8A84B":"#e0d0d5"}"></div>`:"";
+    return `<div class="step-wrap"><div class="step-circle" style="background:${bg};border-color:${bc};color:${col}">${done?"✓":i+1}</div><span class="step-label" style="color:${lbl};font-weight:${lbw}">${s}</span></div>${line}`;
+  }).join("");
+}
+
+function mkSelect(label,id,options,val_){
+  return `<label>${label}</label><select id="${id}"><option value="">— Sélectionner —</option>${options.map(o=>`<option value="${o}"${val_===o?' selected':''}>${o}</option>`).join("")}</select>`;
+}
+
+function renderStep(){
+  const app = document.getElementById("app");
+  if(step===0){
+    app.innerHTML = `<p style="font-size:13px;color:#7A5060;margin-bottom:20px">Renseignez les informations de votre projet pour obtenir une analyse d'éligibilité aux fonds européens.</p>
+    ${mkSelect("Secteur d'activité *","secteur",SECTEURS,form.secteur)}
+    ${mkSelect("Type de projet *","type_projet",TYPES,form.type)}
+    ${mkSelect("Localisation du projet *","localisation",LOCS,form.localisation)}
+    <label>Description courte (optionnel)</label>
+    <textarea id="description" placeholder="Ex : Création d'un complexe hôtelier éco-responsable à Pointe-à-Pitre…">${form.description}</textarea>
+    <div class="nav"><div style="flex:1"></div><button class="btn btn-primary" style="flex:2" onclick="next()">Suivant</button></div>`;
+  } else if(step===1){
+    app.innerHTML = `<p style="font-size:13px;color:#7A5060;margin-bottom:20px">Le statut juridique conditionne l'accès à certains dispositifs et les taux d'aide applicables.</p>
+    ${mkSelect("Statut juridique du porteur *","statut",STATUTS,form.statut)}
+    <div class="nav"><button class="btn btn-secondary" style="flex:1" onclick="back()">Retour</button><button class="btn btn-primary" style="flex:2" onclick="next()">Suivant</button></div>`;
+  } else if(step===2){
+    app.innerHTML = `<p style="font-size:13px;color:#7A5060;margin-bottom:20px">Le montant d'investissement détermine les seuils d'accès aux programmes et les plafonds d'aide.</p>
+    ${mkSelect("Montant total de l'investissement *","montant",TRANCHES,form.montant)}
+    <div class="nav"><button class="btn btn-secondary" style="flex:1" onclick="back()">Retour</button><button class="btn btn-primary" style="flex:2" onclick="analyze()">Analyser mon projet</button></div>`;
+  }
+}
+
+function saveStep(){
+  if(step===0){form.secteur=val("secteur");form.type=val("type_projet");form.localisation=val("localisation");form.description=val("description");}
+  if(step===1){form.statut=val("statut");}
+  if(step===2){form.montant=val("montant");}
+}
+
+function canNext(){
+  if(step===0) return val("secteur")&&val("type_projet")&&val("localisation");
+  if(step===1) return val("statut");
+  if(step===2) return val("montant");
+  return true;
+}
+
+function next(){if(!canNext()){alert("Merci de remplir tous les champs obligatoires.");return;}saveStep();step++;renderProgress();renderStep();}
+function back(){saveStep();step--;renderProgress();renderStep();}
+
+function analyzeEligibility(){
+  const f=form, isDOM=["Guadeloupe","Martinique","Guyane","La Réunion","Mayotte"].includes(f.localisation);
+  const isEnt=["TPE (< 10 salariés)","PME (10–249 salariés)","ETI / Grande entreprise"].includes(f.statut);
+  const isBig=["500 000 € – 1 000 000 €","1 000 000 € – 5 000 000 €","Plus de 5 000 000 €"].includes(f.montant);
+  const isMed=["200 000 € – 500 000 €","500 000 € – 1 000 000 €","1 000 000 € – 5 000 000 €","Plus de 5 000 000 €"].includes(f.montant);
+  const isInno=["Innovation / Numérique / Tech","R&D / Innovation"].includes(f.secteur)||f.type==="R&D / Innovation";
+  const isEnv=f.secteur==="Énergie / Environnement"||f.type==="Transition énergétique";
+  const isNum=f.type==="Transition numérique"||f.secteur==="Innovation / Numérique / Tech";
+  const isTour=f.secteur==="Hôtellerie / Tourisme";
+  let score=0, progs=[];
+  if(isDOM){score+=40;progs.push({nom:"FEDER – Fonds Européen de Développement Régional",taux:isBig?"40–50%":"30–40%",plafond:"Selon programme opérationnel",high:true,note:"DOM éligibles aux programmes FEDER renforcés (article 349 TFUE)."});}
+  if(isDOM&&isInno){score+=20;progs.push({nom:"FEDER – Axe Innovation & Compétitivité",taux:"45–55%",plafond:"Jusqu'à 2 M€",high:true,note:"Projets R&D, numérique et innovation prioritaires dans les DOM."});}
+  if(isEnv){score+=15;progs.push({nom:"FEDER – Axe Transition Énergétique",taux:"40–60%",plafond:"Jusqu'à 3 M€",high:true,note:"Fortement financé dans les DOM (objectif neutralité carbone 2030)."});}
+  if(isNum){score+=15;progs.push({nom:"FEDER – Axe Économie Numérique",taux:"35–50%",plafond:"Jusqu'à 1,5 M€",high:false,note:"Digitalisation, cybersécurité, e-commerce, infrastructures numériques."});}
+  if(isEnt&&isMed){score+=10;progs.push({nom:"BPI France – Prêt Croissance DOM",taux:"Taux bonifiés",plafond:"Jusqu'à 5 M€",high:false,note:"Complémentaire FEDER pour le cofinancement privé."});}
+  if(isTour&&isDOM){score+=10;progs.push({nom:"Région Guadeloupe – Fonds Tourisme Durable",taux:"20–35%",plafond:"500 K€",high:false,note:"Hébergement, restauration, attractivité touristique."});}
+  if(isDOM&&isEnt){progs.push({nom:"Girardin Industriel (IS 244 quater W CGI)",taux:"35–53%",plafond:"Selon investissement",high:false,note:"Outil de défiscalisation puissant pour les investissements matériels."});}
+  if(isEnv||isInno){progs.push({nom:"ADEME – Fonds Chaleur / Économie Circulaire",taux:"20–40%",plafond:"Variable",high:false,note:"Cumulable avec FEDER sous conditions de plafonnement."});}
+  score=Math.min(score,95);
+  if(!isDOM) score=Math.min(score,40);
+  return {score,progs};
+}
+
+async function analyze(){
+  saveStep();
+  if(!form.montant){alert("Merci de sélectionner un montant.");return;}
+  step=3; renderProgress();
+  const app=document.getElementById("app");
+  app.innerHTML=`<div style="text-align:center;padding:3rem 0;color:#7A5060"><div class="spinner"></div><p style="font-size:13px">Analyse en cours par l'IA LOSKO…</p></div>`;
+  const r=analyzeEligibility();
+  const scoreCol=r.score>=70?"#E8D28B":r.score>=40?"#C8A84B":"#f08080";
+  const scoreLbl=r.score>=70?"Éligibilité forte":r.score>=40?"Éligibilité partielle":"Éligibilité faible";
+  const progsHtml=r.progs.map(p=>`<div class="prog-item" style="border-left:3px solid ${p.high?"#6B1A3A":"#C8A84B"}">
+    <div style="display:flex;justify-content:space-between;gap:8px;margin-bottom:4px">
+      <span style="font-weight:500;font-size:13px">${p.nom}</span>
+      <span class="prog-badge" style="background:${p.high?"#f0e8ec":"#fdf5e0"};color:${p.high?"#6B1A3A":"#7a5a00"}">${p.taux}</span>
+    </div>
+    <div style="font-size:12px;color:#7A5060">${p.note}</div>
+    <div style="font-size:11px;color:#b090a0;margin-top:3px">Plafond indicatif : ${p.plafond}</div>
+  </div>`).join("");
+
+  app.innerHTML=`
+    <div class="score-box">
+      <div style="text-align:center;min-width:72px"><div class="score-num" style="color:${scoreCol}">${r.score}</div><div style="font-size:11px;opacity:.6">/ 100</div></div>
+      <div style="flex:1"><div style="font-weight:500;font-size:15px;color:${scoreCol};margin-bottom:8px">${scoreLbl}</div>
+      <div class="score-bar-bg"><div class="score-bar" style="width:${r.score}%"></div></div>
+      <div style="font-size:12px;opacity:.7;margin-top:4px">${r.progs.length} programme(s) identifié(s)</div></div>
+    </div>
+    <div style="font-weight:500;font-size:11px;color:#6B1A3A;text-transform:uppercase;letter-spacing:1px;margin-bottom:10px">Programmes applicables</div>
+    ${progsHtml}
+    <div id="reco-zone" style="margin-bottom:20px"><div style="text-align:center;padding:1.5rem;color:#7A5060"><div class="spinner" style="width:32px;height:32px;border-width:2px"></div><p style="font-size:12px;margin-top:8px">Génération de la recommandation IA…</p></div></div>
+    <div class="cta-box">
+      <div style="color:#C8A84B;font-weight:500;font-size:14px;margin-bottom:4px;letter-spacing:.5px">Être accompagné par LOSKO</div>
+      <div style="color:rgba(255,255,255,.75);font-size:12px;margin-bottom:16px">Nos experts AMO prennent en charge le montage complet de votre dossier FEDER.</div>
+      <button class="btn btn-gold" onclick="window.location='mailto:contact@losko.fr?subject=Demande AMO FEDER'">Prendre contact</button>
+    </div>
+    <button class="btn btn-secondary" style="width:100%;margin-top:12px" onclick="reset()">Nouvelle simulation</button>`;
+
+  try {
+    const prompt=`Tu es un expert AMO en financement public FEDER pour les DOM (Guadeloupe). Analyse ce projet et donne une recommandation concise (5 lignes max) :
+- Secteur : ${form.secteur}
+- Type : ${form.type}
+- Localisation : ${form.localisation}
+- Structure : ${form.statut}
+- Investissement : ${form.montant}
+- Description : ${form.description||"Non précisée"}
+Score éligibilité : ${r.score}/100 — Programmes : ${r.progs.map(p=>p.nom).join(", ")}
+Donne : (1) Stratégie recommandée, (2) Points de vigilance, (3) Prochaine étape concrète.`;
+    const res=await fetch(API_URL,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({prompt})});
+    const data=await res.json();
+    const txt=data.result||"";
+    document.getElementById("reco-zone").innerHTML=txt?`<div class="reco-box">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px"><div class="reco-tag">IA</div><span style="font-weight:500;font-size:13px;color:#6B1A3A">Recommandation LOSKO</span></div>
+      <div style="font-size:13px;color:#2A0E18;line-height:1.7;white-space:pre-wrap">${txt}</div></div>`:"";
+  } catch(e){document.getElementById("reco-zone").innerHTML="";}
+}
+
+function reset(){step=0;form={secteur:"",type:"",localisation:"",statut:"",montant:"",description:""};renderProgress();renderStep();}
+
+renderProgress();
+renderStep();
+</script>
+</body>
+</html>
