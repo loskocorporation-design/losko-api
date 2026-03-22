@@ -1,0 +1,4 @@
+[[redirects]]
+  from = "/simulateur"
+  to = "/simulateur.html"
+  status = 200
