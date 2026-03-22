@@ -1,435 +1,1225 @@
-#!/usr/bin/env node
-// LOSKO FEDER Agent — Word Export Generator
-// Usage: node generate-docx.js <input.json> <output.docx>
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>LOSKO FEDER Agent</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:ital,wght@0,300;0,400;0,500;0,600;1,400&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bordeaux: #6B1F3A;
+  --bordeaux-dark: #4A1228;
+  --bordeaux-light: #8B2F50;
+  --bordeaux-pale: #F5EEF1;
+  --bordeaux-muted: rgba(107,31,58,0.07);
+  --anthracite: #1C1C1E;
+  --anthracite-mid: #2C2C2E;
+  --gray-dark: #48484A;
+  --gray-mid: #8E8E93;
+  --gray-light: #C7C7CC;
+  --gray-pale: #F2F2F7;
+  --gray-bg: #F8F7F5;
+  --white: #FFFFFF;
+  --confirm: #1B5E20; --confirm-bg: #E8F5E9;
+  --deduit: #1565C0; --deduit-bg: #E3F2FD;
+  --hypothese: #E65100; --hypothese-bg: #FFF3E0;
+  --manquant: #B71C1C; --manquant-bg: #FFEBEE;
+  --font-display: 'DM Serif Display', Georgia, serif;
+  --font-body: 'DM Sans', system-ui, sans-serif;
+  --radius: 10px; --radius-lg: 16px;
+  --shadow: 0 1px 3px rgba(0,0,0,0.06),0 4px 16px rgba(0,0,0,0.06);
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{font-family:var(--font-body);background:var(--gray-bg);color:var(--anthracite);min-height:100vh;font-size:15px;line-height:1.6;}
 
-const {
-  Document, Packer, Paragraph, TextRun, Table, TableRow, TableCell,
-  Header, Footer, AlignmentType, HeadingLevel, BorderStyle, WidthType,
-  ShadingType, VerticalAlign, PageNumberElement, PageBreak, LevelFormat, TabStopType
-} = require('docx');
-const fs = require('fs');
+/* ── HEADER ── */
+header{background:var(--bordeaux-dark);border-bottom:2px solid var(--bordeaux);padding:0 32px;display:flex;align-items:center;justify-content:space-between;height:60px;position:sticky;top:0;z-index:200;}
+.logo{display:flex;align-items:baseline;gap:10px;}
+.logo-text{font-family:var(--font-display);font-size:20px;color:var(--white);letter-spacing:.02em;}
+.logo-badge{background:var(--bordeaux-light);color:rgba(255,255,255,.85);font-size:10px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;padding:3px 8px;border-radius:4px;}
+.header-nav{display:flex;gap:4px;}
+.nav-btn{background:transparent;border:1px solid rgba(255,255,255,.18);color:rgba(255,255,255,.7);padding:6px 14px;border-radius:var(--radius);font-family:var(--font-body);font-size:12px;font-weight:500;cursor:pointer;transition:all .2s;}
+.nav-btn:hover,.nav-btn.active{background:rgba(255,255,255,.12);color:white;border-color:rgba(255,255,255,.35);}
+.nav-btn.active{background:rgba(255,255,255,.18);}
 
-const inputPath = process.argv[2];
-const outputPath = process.argv[3] || 'dossier_feder.docx';
+/* ── SCREENS ── */
+.screen{display:none;}
+.screen.active{display:flex;min-height:calc(100vh - 60px);}
 
-if (!inputPath) {
-  console.error('Usage: node generate-docx.js <input.json> <output.docx>');
-  process.exit(1);
+/* ══════════════════════════════════════
+   SCREEN: AGENT (transcription + guided)
+═══════════════════════════════════════ */
+#screen-agent{flex-direction:row;}
+
+/* MODE TABS */
+.mode-bar{background:var(--white);border-bottom:1px solid rgba(0,0,0,.07);padding:0 32px;display:flex;gap:0;position:sticky;top:60px;z-index:100;}
+.mode-tab{padding:12px 20px;border:none;background:transparent;font-family:var(--font-body);font-size:13px;font-weight:500;color:var(--gray-mid);cursor:pointer;border-bottom:2px solid transparent;transition:all .2s;display:flex;align-items:center;gap:7px;}
+.mode-tab .mode-icon{font-size:14px;}
+.mode-tab.active{color:var(--bordeaux);border-bottom-color:var(--bordeaux);}
+.mode-tab:hover:not(.active){color:var(--anthracite);}
+
+/* AGENT LAYOUT */
+.agent-wrapper{display:grid;grid-template-columns:460px 1fr;flex:1;}
+
+/* LEFT PANEL */
+.left-panel{background:var(--white);border-right:1px solid rgba(0,0,0,.07);display:flex;flex-direction:column;position:sticky;top:60px;height:calc(100vh - 60px);overflow-y:auto;}
+.panel-header{padding:24px 28px 18px;border-bottom:1px solid rgba(0,0,0,.06);}
+.panel-title{font-family:var(--font-display);font-size:17px;color:var(--bordeaux-dark);margin-bottom:3px;}
+.panel-sub{font-size:12px;color:var(--gray-mid);line-height:1.5;}
+.form-body{padding:20px 28px;flex:1;display:flex;flex-direction:column;gap:16px;}
+.field-group{display:flex;flex-direction:column;gap:5px;}
+.field-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+label{font-size:11px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--gray-dark);}
+.opt{font-weight:400;color:var(--gray-mid);text-transform:none;letter-spacing:0;margin-left:3px;font-size:11px;}
+input[type=text],input[type=date],input[type=password],select,textarea{font-family:var(--font-body);font-size:13px;color:var(--anthracite);background:var(--gray-pale);border:1px solid var(--gray-light);border-radius:var(--radius);padding:9px 12px;transition:border-color .2s,box-shadow .2s;width:100%;outline:none;appearance:none;}
+input:focus,select:focus,textarea:focus{border-color:var(--bordeaux);box-shadow:0 0 0 3px rgba(107,31,58,.09);background:var(--white);}
+textarea{resize:vertical;min-height:200px;line-height:1.6;}
+.char-count-bar{display:flex;justify-content:space-between;align-items:center;margin-top:3px;}
+.char-count{font-size:11px;color:var(--gray-mid);}
+.api-row{background:var(--bordeaux-muted);border:1px solid rgba(107,31,58,.10);border-radius:var(--radius);padding:10px 12px;display:flex;gap:8px;align-items:center;}
+.api-icon{width:26px;height:26px;background:var(--bordeaux);border-radius:6px;display:flex;align-items:center;justify-content:center;flex-shrink:0;color:white;font-size:12px;}
+.api-row input{flex:1;background:white;font-size:12px;letter-spacing:.04em;}
+.panel-footer{padding:16px 28px 24px;border-top:1px solid rgba(0,0,0,.06);display:flex;flex-direction:column;gap:8px;}
+.btn-generate{background:var(--bordeaux);color:white;border:none;border-radius:var(--radius);padding:13px 20px;font-family:var(--font-body);font-size:13px;font-weight:600;cursor:pointer;transition:background .2s,transform .1s;display:flex;align-items:center;justify-content:center;gap:8px;width:100%;}
+.btn-generate:hover{background:var(--bordeaux-light);}
+.btn-generate:active{transform:scale(.98);}
+.btn-generate:disabled{background:var(--gray-mid);cursor:not-allowed;transform:none;}
+.btn-reset{background:transparent;color:var(--gray-mid);border:1px solid var(--gray-light);border-radius:var(--radius);padding:9px;font-family:var(--font-body);font-size:12px;cursor:pointer;transition:all .2s;width:100%;}
+.btn-reset:hover{color:var(--anthracite);border-color:var(--gray-dark);}
+
+/* ── GUIDED FORM MODE ── */
+#guided-panel{display:none;flex-direction:column;}
+.guided-progress{padding:16px 28px 0;border-bottom:1px solid rgba(0,0,0,.06);}
+.gp-label{font-size:11px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--gray-mid);margin-bottom:8px;}
+.progress-steps{display:flex;gap:4px;margin-bottom:14px;}
+.ps{flex:1;height:3px;border-radius:2px;background:var(--gray-light);transition:background .3s;}
+.ps.done{background:var(--bordeaux);}
+.ps.active{background:var(--bordeaux-light);}
+.gp-step-label{font-size:12px;color:var(--bordeaux);font-weight:500;}
+.guided-form-body{padding:20px 28px;flex:1;overflow-y:auto;}
+.guided-step{display:none;flex-direction:column;gap:14px;}
+.guided-step.active{display:flex;}
+.step-intro{font-size:13px;color:var(--gray-dark);line-height:1.6;padding:10px 14px;background:var(--bordeaux-muted);border-radius:var(--radius);border-left:3px solid var(--bordeaux);}
+.guided-footer{padding:14px 28px 20px;border-top:1px solid rgba(0,0,0,.06);display:flex;gap:8px;}
+.btn-prev{flex:1;background:transparent;color:var(--gray-mid);border:1px solid var(--gray-light);border-radius:var(--radius);padding:10px;font-family:var(--font-body);font-size:13px;cursor:pointer;transition:all .2s;}
+.btn-prev:hover{color:var(--anthracite);border-color:var(--anthracite);}
+.btn-next{flex:2;background:var(--bordeaux);color:white;border:none;border-radius:var(--radius);padding:10px 16px;font-family:var(--font-body);font-size:13px;font-weight:600;cursor:pointer;transition:background .2s;}
+.btn-next:hover{background:var(--bordeaux-light);}
+
+/* RIGHT PANEL */
+.right-panel{padding:36px 44px;min-height:calc(100vh - 60px);}
+
+/* EMPTY STATE */
+.empty-state{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:55vh;gap:18px;text-align:center;}
+.empty-icon{width:64px;height:64px;border:2px solid var(--bordeaux-pale);border-radius:18px;display:flex;align-items:center;justify-content:center;font-size:26px;color:var(--bordeaux);background:var(--bordeaux-pale);}
+.empty-title{font-family:var(--font-display);font-size:20px;color:var(--anthracite-mid);}
+.empty-sub{font-size:13px;color:var(--gray-mid);max-width:340px;line-height:1.7;}
+.steps-preview{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:10px;text-align:left;max-width:420px;}
+.step-card{background:var(--white);border:1px solid rgba(0,0,0,.07);border-radius:var(--radius);padding:12px 14px;display:flex;gap:9px;align-items:flex-start;}
+.step-num{width:20px;height:20px;background:var(--bordeaux-pale);color:var(--bordeaux);border-radius:50%;font-size:10px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px;}
+.step-text{font-size:11px;color:var(--gray-dark);line-height:1.5;}
+.step-label{font-weight:600;color:var(--anthracite);font-size:11px;display:block;margin-bottom:1px;}
+
+/* LOADING */
+.loading-state{display:none;flex-direction:column;align-items:center;justify-content:center;min-height:55vh;gap:22px;text-align:center;}
+.loading-ring{width:50px;height:50px;border:3px solid var(--bordeaux-pale);border-top-color:var(--bordeaux);border-radius:50%;animation:spin .9s linear infinite;}
+@keyframes spin{to{transform:rotate(360deg);}}
+.loading-steps{display:flex;flex-direction:column;gap:8px;text-align:left;}
+.loading-step{display:flex;align-items:center;gap:9px;font-size:12px;color:var(--gray-mid);transition:color .3s;}
+.loading-step.active{color:var(--bordeaux);font-weight:500;}
+.loading-step.done{color:var(--confirm);}
+.loading-dot{width:7px;height:7px;border-radius:50%;background:var(--gray-light);flex-shrink:0;transition:background .3s;}
+.loading-step.active .loading-dot{background:var(--bordeaux);}
+.loading-step.done .loading-dot{background:var(--confirm);}
+
+/* RESULT */
+.result-container{display:none;}
+.result-topbar{display:flex;align-items:center;justify-content:space-between;margin-bottom:24px;padding-bottom:18px;border-bottom:1px solid rgba(0,0,0,.07);}
+.result-meta{display:flex;flex-direction:column;gap:3px;}
+.result-title{font-family:var(--font-display);font-size:20px;color:var(--bordeaux-dark);}
+.result-info{font-size:11px;color:var(--gray-mid);}
+.result-actions{display:flex;gap:7px;flex-wrap:wrap;}
+.btn-action{background:var(--white);border:1px solid var(--gray-light);border-radius:var(--radius);padding:7px 14px;font-family:var(--font-body);font-size:12px;font-weight:500;cursor:pointer;transition:all .2s;color:var(--anthracite);display:flex;align-items:center;gap:5px;}
+.btn-action:hover{border-color:var(--bordeaux);color:var(--bordeaux);}
+.btn-action.primary{background:var(--bordeaux);color:white;border-color:var(--bordeaux);}
+.btn-action.primary:hover{background:var(--bordeaux-light);}
+.btn-action.word{background:#1B5E20;color:white;border-color:#1B5E20;}
+.btn-action.word:hover{background:#2E7D32;}
+
+/* SCORE */
+.score-banner{background:var(--white);border:1px solid rgba(0,0,0,.07);border-radius:var(--radius-lg);padding:20px 24px;margin-bottom:20px;box-shadow:var(--shadow);}
+.score-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;}
+.score-label{font-size:11px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--gray-mid);}
+.score-global{font-family:var(--font-display);font-size:30px;color:var(--bordeaux-dark);}
+.score-mention{font-size:12px;font-weight:600;padding:4px 12px;border-radius:20px;}
+.score-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;}
+.score-item{display:flex;flex-direction:column;gap:4px;}
+.score-item-label{font-size:10px;color:var(--gray-mid);}
+.score-item-bar{height:3px;background:var(--gray-pale);border-radius:2px;overflow:hidden;}
+.score-item-fill{height:100%;background:var(--bordeaux);border-radius:2px;transition:width 1s ease;}
+.score-item-val{font-size:10px;font-weight:600;color:var(--anthracite);}
+
+/* TABS */
+.tabs{display:flex;gap:3px;background:var(--white);border:1px solid rgba(0,0,0,.07);border-radius:var(--radius);padding:3px;margin-bottom:18px;box-shadow:var(--shadow);}
+.tab{flex:1;padding:8px 10px;border:none;background:transparent;border-radius:7px;font-family:var(--font-body);font-size:11px;font-weight:500;color:var(--gray-mid);cursor:pointer;transition:all .2s;text-align:center;}
+.tab.active{background:var(--bordeaux);color:white;}
+.tab:hover:not(.active){color:var(--anthracite);background:var(--gray-pale);}
+
+.tab-content{display:none;}
+.tab-content.active{display:block;}
+
+/* DOC BLOCKS */
+.doc-block{background:var(--white);border:1px solid rgba(0,0,0,.07);border-radius:var(--radius-lg);overflow:hidden;margin-bottom:12px;box-shadow:var(--shadow);}
+.doc-block-header{background:var(--bordeaux-muted);padding:12px 18px;display:flex;align-items:center;gap:9px;border-bottom:1px solid rgba(107,31,58,.07);cursor:pointer;user-select:none;}
+.doc-block-num{width:22px;height:22px;background:var(--bordeaux);color:white;border-radius:5px;font-size:10px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.doc-block-title{font-size:12px;font-weight:600;color:var(--bordeaux-dark);flex:1;}
+.doc-block-chevron{font-size:11px;color:var(--bordeaux);transition:transform .25s;}
+.doc-block.collapsed .doc-block-chevron{transform:rotate(-90deg);}
+.doc-block.collapsed .doc-block-body{display:none;}
+.doc-block-body{padding:18px 22px;font-size:13px;line-height:1.8;color:var(--anthracite-mid);white-space:pre-wrap;}
+
+.tag{display:inline-block;font-size:9px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;padding:2px 5px;border-radius:3px;margin-left:3px;vertical-align:middle;}
+.tag-confirm{background:var(--confirm-bg);color:var(--confirm);}
+.tag-deduit{background:var(--deduit-bg);color:var(--deduit);}
+.tag-hypothese{background:var(--hypothese-bg);color:var(--hypothese);}
+.tag-manquant{background:var(--manquant-bg);color:var(--manquant);}
+
+.synth-table{width:100%;border-collapse:collapse;font-size:12px;}
+.synth-table th{background:var(--bordeaux-muted);color:var(--bordeaux-dark);font-size:10px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;padding:9px 14px;text-align:left;border-bottom:1px solid rgba(107,31,58,.09);}
+.synth-table td{padding:9px 14px;border-bottom:1px solid rgba(0,0,0,.04);vertical-align:top;}
+.synth-table tr:last-child td{border-bottom:none;}
+.synth-table tr:hover td{background:var(--gray-pale);}
+.synth-field{font-weight:600;color:var(--gray-dark);width:160px;}
+
+.question-group{margin-bottom:18px;}
+.question-group-label{font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--gray-mid);margin-bottom:8px;display:flex;align-items:center;gap:7px;}
+.priority-dot{width:7px;height:7px;border-radius:50%;}
+.critical .priority-dot{background:var(--manquant);}
+.important .priority-dot{background:var(--hypothese);}
+.optional .priority-dot{background:var(--confirm);}
+.question-item{background:var(--white);border:1px solid rgba(0,0,0,.07);border-radius:var(--radius);padding:10px 14px;font-size:12px;line-height:1.6;color:var(--anthracite-mid);margin-bottom:6px;display:flex;gap:8px;}
+.q-num{font-size:10px;font-weight:700;color:var(--gray-mid);flex-shrink:0;margin-top:2px;}
+.checklist-section{margin-bottom:18px;}
+.checklist-title{font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--gray-mid);margin-bottom:8px;}
+.check-item{display:flex;align-items:flex-start;gap:9px;padding:7px 0;border-bottom:1px solid rgba(0,0,0,.04);font-size:12px;line-height:1.5;}
+.check-icon{flex-shrink:0;margin-top:1px;font-size:13px;}
+
+/* ══════════════════════════════════════
+   SCREEN: HISTORIQUE
+═══════════════════════════════════════ */
+#screen-history{flex-direction:column;padding:36px 44px;}
+.history-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:28px;}
+.history-title{font-family:var(--font-display);font-size:22px;color:var(--bordeaux-dark);}
+.history-meta{font-size:12px;color:var(--gray-mid);margin-top:4px;}
+.history-actions{display:flex;gap:8px;}
+.history-empty{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:40vh;gap:16px;text-align:center;}
+.history-empty-icon{font-size:40px;opacity:.4;}
+.history-empty-text{font-size:14px;color:var(--gray-mid);}
+.history-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:16px;}
+.history-card{background:var(--white);border:1px solid rgba(0,0,0,.07);border-radius:var(--radius-lg);padding:18px 20px;box-shadow:var(--shadow);cursor:pointer;transition:all .2s;position:relative;}
+.history-card:hover{border-color:var(--bordeaux);box-shadow:0 4px 20px rgba(107,31,58,.12);}
+.hc-header{display:flex;align-items:flex-start;justify-content:space-between;gap:10px;margin-bottom:10px;}
+.hc-client{font-family:var(--font-display);font-size:15px;color:var(--bordeaux-dark);}
+.hc-date{font-size:11px;color:var(--gray-mid);white-space:nowrap;margin-top:2px;}
+.hc-sector{font-size:11px;color:var(--bordeaux);background:var(--bordeaux-muted);padding:3px 9px;border-radius:20px;margin-bottom:10px;display:inline-block;}
+.hc-score-row{display:flex;align-items:center;gap:8px;margin-bottom:12px;}
+.hc-score-num{font-family:var(--font-display);font-size:18px;color:var(--bordeaux-dark);}
+.hc-score-label{font-size:11px;color:var(--gray-mid);}
+.hc-score-bar{flex:1;height:3px;background:var(--gray-pale);border-radius:2px;overflow:hidden;}
+.hc-score-fill{height:100%;background:var(--bordeaux);border-radius:2px;}
+.hc-mention{font-size:10px;font-weight:700;padding:2px 8px;border-radius:10px;}
+.hc-actions{display:flex;gap:6px;justify-content:flex-end;}
+.hc-btn{background:transparent;border:1px solid var(--gray-light);border-radius:7px;padding:5px 10px;font-family:var(--font-body);font-size:11px;cursor:pointer;transition:all .2s;color:var(--gray-dark);display:flex;align-items:center;gap:4px;}
+.hc-btn:hover{border-color:var(--bordeaux);color:var(--bordeaux);}
+.hc-btn.word{border-color:#C8E6C9;color:#1B5E20;}
+.hc-btn.word:hover{background:#E8F5E9;}
+.hc-btn.del{border-color:#FFCDD2;color:#B71C1C;}
+.hc-btn.del:hover{background:var(--manquant-bg);}
+
+/* ERROR */
+.error-box{background:var(--manquant-bg);border:1px solid rgba(183,28,28,.2);border-radius:var(--radius);padding:12px 16px;font-size:12px;color:var(--manquant);display:none;margin-bottom:12px;}
+
+/* TOAST */
+.toast{position:fixed;bottom:22px;right:22px;background:var(--anthracite);color:white;border-radius:var(--radius);padding:11px 18px;font-size:12px;font-weight:500;z-index:999;opacity:0;transform:translateY(8px);transition:all .3s;pointer-events:none;}
+.toast.show{opacity:1;transform:translateY(0);}
+
+/* DOCX DOWNLOAD NOTICE */
+.docx-notice{background:var(--confirm-bg);border:1px solid rgba(27,94,32,.2);border-radius:var(--radius);padding:10px 14px;font-size:12px;color:var(--confirm);display:none;margin-bottom:12px;}
+
+@media(max-width:900px){
+  .agent-wrapper{grid-template-columns:1fr;}
+  .left-panel{position:relative;height:auto;}
+  .right-panel{padding:20px;}
+  .score-grid{grid-template-columns:1fr 1fr;}
+  #screen-history{padding:20px;}
+  .history-grid{grid-template-columns:1fr;}
+}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">
+    <span class="logo-text">LOSKO</span>
+    <span class="logo-badge">FEDER Agent</span>
+  </div>
+  <div class="header-nav">
+    <button class="nav-btn active" onclick="showScreen('agent')" id="nav-agent">⚡ Nouveau dossier</button>
+    <button class="nav-btn" onclick="showScreen('history')" id="nav-history">📂 Historique <span id="hist-count" style="background:rgba(255,255,255,.2);border-radius:10px;padding:1px 6px;font-size:10px;margin-left:3px;">0</span></button>
+  </div>
+</header>
+
+<!-- ══════════════════════════
+     SCREEN: AGENT
+══════════════════════════ -->
+<div class="screen active" id="screen-agent">
+  <div style="flex:1;display:flex;flex-direction:column;">
+
+    <!-- MODE BAR -->
+    <div class="mode-bar">
+      <button class="mode-tab active" id="mode-transcription-tab" onclick="setMode('transcription')">
+        <span class="mode-icon">🎤</span> Mode Transcription
+      </button>
+      <button class="mode-tab" id="mode-guided-tab" onclick="setMode('guided')">
+        <span class="mode-icon">📝</span> Mode Formulaire guidé
+      </button>
+    </div>
+
+    <div class="agent-wrapper">
+
+      <!-- LEFT PANEL -->
+      <aside class="left-panel">
+
+        <!-- TRANSCRIPTION PANEL -->
+        <div id="transcription-panel" style="display:flex;flex-direction:column;flex:1;">
+          <div class="panel-header">
+            <div class="panel-title">Transcription de réunion</div>
+            <div class="panel-sub">Collez le texte brut issu de WhisperAI ou tout autre outil de retranscription.</div>
+          </div>
+          <div class="form-body">
+            <div class="field-row">
+              <div class="field-group">
+                <label>Client <span class="opt">optionnel</span></label>
+                <input type="text" id="t-client" placeholder="Nom de l'entreprise">
+              </div>
+              <div class="field-group">
+                <label>Date réunion</label>
+                <input type="date" id="t-date">
+              </div>
+            </div>
+            <div class="field-row">
+              <div class="field-group">
+                <label>Code APE <span class="opt">si connu</span></label>
+                <input type="text" id="t-ape" placeholder="ex. 1013A" maxlength="6">
+              </div>
+              <div class="field-group">
+                <label>Secteur <span class="opt">si connu</span></label>
+                <select id="t-sector">
+                  <option value="">— Détection auto</option>
+                  <option value="agroalimentaire">Agroalimentaire</option>
+                  <option value="transformation artisanale">Transformation artisanale</option>
+                  <option value="commerce">Commerce</option>
+                  <option value="services">Services</option>
+                  <option value="tourisme">Tourisme</option>
+                  <option value="numérique">Numérique / Tech</option>
+                  <option value="industrie légère">Industrie légère</option>
+                  <option value="économie verte">Économie verte</option>
+                  <option value="logistique">Logistique / Transport</option>
+                  <option value="santé bien-être">Santé / Bien-être</option>
+                  <option value="BTP construction">BTP / Construction</option>
+                  <option value="agriculture pêche">Agriculture / Pêche</option>
+                </select>
+              </div>
+            </div>
+            <div class="field-group">
+              <label>Transcription <span style="color:var(--manquant)">*</span></label>
+              <textarea id="t-transcript" placeholder="Collez ici la transcription brute. Le texte peut être désordonné, oral, avec des hésitations — l'agent s'en charge." oninput="updateWordCount()"></textarea>
+              <div class="char-count-bar">
+                <span class="char-count" id="word-count">0 mots</span>
+                <span class="char-count" id="min-words" style="color:var(--manquant);display:none">minimum 30 mots requis</span>
+              </div>
+            </div>
+            <div class="field-group">
+              <label>Clé API Anthropic</label>
+              <div class="api-row">
+                <div class="api-icon">🔑</div>
+                <input type="password" id="t-apikey" placeholder="sk-ant-api03-...">
+              </div>
+            </div>
+          </div>
+          <div class="panel-footer">
+            <div class="error-box" id="t-error"></div>
+            <button class="btn-generate" id="btn-gen-transcript" onclick="generateFromTranscription()">
+              <span>⚡</span><span>Générer le dossier FEDER</span>
+            </button>
+            <button class="btn-reset" onclick="resetTranscription()">Réinitialiser</button>
+          </div>
+        </div>
+
+        <!-- GUIDED PANEL -->
+        <div id="guided-panel">
+          <div class="guided-progress">
+            <div class="gp-label">Progression</div>
+            <div class="progress-steps" id="progress-steps"></div>
+            <div class="gp-step-label" id="gp-step-label"></div>
+          </div>
+          <div class="guided-form-body">
+            <!-- Step 1: Entreprise -->
+            <div class="guided-step" id="gstep-1">
+              <div class="step-intro">Renseignez les informations de base sur l'entreprise porteuse du projet.</div>
+              <div class="field-group"><label>Raison sociale <span style="color:var(--manquant)">*</span></label><input type="text" id="g-raison" placeholder="Nom juridique de l'entreprise"></div>
+              <div class="field-row">
+                <div class="field-group"><label>Forme juridique</label><select id="g-forme"><option value="">—</option><option>SARL</option><option>SAS</option><option>SA</option><option>EURL</option><option>Auto-entrepreneur</option><option>Association</option><option>Autre</option></select></div>
+                <div class="field-group"><label>Date de création</label><input type="text" id="g-creation" placeholder="ex. 2018"></div>
+              </div>
+              <div class="field-group"><label>Adresse / Commune</label><input type="text" id="g-adresse" placeholder="ex. Pointe-à-Pitre, Guadeloupe"></div>
+              <div class="field-row">
+                <div class="field-group"><label>Code APE <span class="opt">si connu</span></label><input type="text" id="g-ape" placeholder="ex. 1013A" maxlength="6"></div>
+                <div class="field-group"><label>Effectifs actuels</label><input type="text" id="g-effectifs" placeholder="ex. 5 salariés"></div>
+              </div>
+              <div class="field-group"><label>Activité principale</label><textarea id="g-activite" style="min-height:80px" placeholder="Décrivez en 2-3 phrases l'activité de l'entreprise"></textarea></div>
+              <div class="field-group"><label>Chiffre d'affaires <span class="opt">dernier exercice</span></label><input type="text" id="g-ca" placeholder="ex. 350 000 €"></div>
+            </div>
+            <!-- Step 2: Projet -->
+            <div class="guided-step" id="gstep-2">
+              <div class="step-intro">Décrivez le projet d'investissement pour lequel vous demandez le financement FEDER.</div>
+              <div class="field-group"><label>Intitulé du projet <span style="color:var(--manquant)">*</span></label><input type="text" id="g-intitule" placeholder="ex. Modernisation de l'atelier de transformation"></div>
+              <div class="field-group"><label>Description du projet <span style="color:var(--manquant)">*</span></label><textarea id="g-description" style="min-height:120px" placeholder="Décrivez le projet en détail : quoi, pourquoi, comment..."></textarea></div>
+              <div class="field-group"><label>Problème ou besoin à l'origine du projet</label><textarea id="g-probleme" style="min-height:80px" placeholder="Quel problème le projet résout-il ? Quelle opportunité saisit-il ?"></textarea></div>
+              <div class="field-group"><label>Type d'investissements prévus</label><textarea id="g-investissements" style="min-height:80px" placeholder="ex. Équipements de production, logiciels, formation, travaux..."></textarea></div>
+            </div>
+            <!-- Step 3: Finances -->
+            <div class="guided-step" id="gstep-3">
+              <div class="step-intro">Renseignez les éléments financiers du projet. Ces données alimenteront le plan de financement.</div>
+              <div class="field-row">
+                <div class="field-group"><label>Coût total du projet</label><input type="text" id="g-cout" placeholder="ex. 500 000 €"></div>
+                <div class="field-group"><label>Part FEDER souhaitée</label><input type="text" id="g-feder" placeholder="ex. 200 000 € (40%)"></div>
+              </div>
+              <div class="field-group"><label>Autres financements prévus</label><textarea id="g-autres-fin" style="min-height:70px" placeholder="ex. Fonds propres 150 000 €, emprunt bancaire 150 000 €, BPI France..."></textarea></div>
+              <div class="field-group"><label>Calendrier prévisionnel</label><textarea id="g-calendrier" style="min-height:70px" placeholder="ex. Lancement mars 2026, livraison équipements juin 2026, mise en service sept 2026"></textarea></div>
+              <div class="field-group"><label>Emplois créés ou maintenus</label><input type="text" id="g-emplois" placeholder="ex. 3 emplois créés, 8 emplois maintenus"></div>
+            </div>
+            <!-- Step 4: Impact -->
+            <div class="guided-step" id="gstep-4">
+              <div class="step-intro">Ces informations permettront de valoriser l'impact territorial et environnemental du projet auprès des gestionnaires FEDER.</div>
+              <div class="field-group"><label>Impact économique attendu</label><textarea id="g-impact-eco" style="min-height:80px" placeholder="ex. Augmentation du CA de 30%, conquête de nouveaux marchés, amélioration productivité..."></textarea></div>
+              <div class="field-group"><label>Impact territorial / Guadeloupe</label><textarea id="g-impact-terr" style="min-height:80px" placeholder="ex. Réduction des importations, valorisation produits locaux, ancrage territorial..."></textarea></div>
+              <div class="field-group"><label>Impact environnemental <span class="opt">si applicable</span></label><textarea id="g-impact-env" style="min-height:70px" placeholder="ex. Réduction empreinte carbone, économies d'énergie, démarche circulaire..."></textarea></div>
+              <div class="field-group"><label>Informations complémentaires <span class="opt">tout autre élément utile</span></label><textarea id="g-complementaire" style="min-height:70px" placeholder="Certifications, partenariats, contexte réglementaire, historique du projet..."></textarea></div>
+            </div>
+            <!-- Step 5: API & Generate -->
+            <div class="guided-step" id="gstep-5">
+              <div class="step-intro">Vos informations sont prêtes. Renseignez votre clé API et lancez la génération du dossier FEDER complet.</div>
+              <div class="field-group">
+                <label>Clé API Anthropic <span style="color:var(--manquant)">*</span></label>
+                <div class="api-row">
+                  <div class="api-icon">🔑</div>
+                  <input type="password" id="g-apikey" placeholder="sk-ant-api03-...">
+                </div>
+              </div>
+              <div style="background:var(--bordeaux-muted);border-radius:var(--radius);padding:14px 16px;font-size:12px;color:var(--gray-dark);line-height:1.7;">
+                <strong style="color:var(--bordeaux-dark)">Récapitulatif :</strong><br>
+                <span id="guided-recap"></span>
+              </div>
+              <div class="error-box" id="g-error"></div>
+            </div>
+          </div>
+          <div class="guided-footer">
+            <button class="btn-prev" id="btn-prev" onclick="guidedPrev()">← Précédent</button>
+            <button class="btn-next" id="btn-next" onclick="guidedNext()">Suivant →</button>
+          </div>
+        </div>
+
+      </aside>
+
+      <!-- RIGHT PANEL -->
+      <main class="right-panel" id="right-panel">
+        <div class="empty-state" id="empty-state">
+          <div class="empty-icon">📋</div>
+          <div class="empty-title">Prêt à traiter votre dossier</div>
+          <div class="empty-sub">Choisissez un mode d'entrée à gauche et lancez la génération. L'agent produit le dossier FEDER complet en moins de 2 minutes.</div>
+          <div class="steps-preview">
+            <div class="step-card"><div class="step-num">A</div><div class="step-text"><span class="step-label">Fiche synthèse</span>Données extraites et taguées</div></div>
+            <div class="step-card"><div class="step-num">B</div><div class="step-text"><span class="step-label">Dossier FEDER</span>11 rubriques rédigées</div></div>
+            <div class="step-card"><div class="step-num">C</div><div class="step-text"><span class="step-label">Questions</span>Manques priorisés</div></div>
+            <div class="step-card"><div class="step-num">D</div><div class="step-text"><span class="step-label">Score maturité</span>6 axes d'évaluation</div></div>
+          </div>
+        </div>
+        <div class="loading-state" id="loading-state">
+          <div class="loading-ring"></div>
+          <div>
+            <div style="font-family:var(--font-display);font-size:17px;color:var(--bordeaux-dark);margin-bottom:3px;text-align:center">Traitement en cours...</div>
+            <div style="font-size:12px;color:var(--gray-mid);text-align:center;margin-bottom:20px">Analyse par l'agent FEDER</div>
+            <div class="loading-steps">
+              <div class="loading-step" id="ls-1"><div class="loading-dot"></div>Nettoyage et structuration</div>
+              <div class="loading-step" id="ls-2"><div class="loading-dot"></div>Extraction des données entreprise</div>
+              <div class="loading-step" id="ls-3"><div class="loading-dot"></div>Analyse sectorielle APE</div>
+              <div class="loading-step" id="ls-4"><div class="loading-dot"></div>Enrichissement territorial Guadeloupe</div>
+              <div class="loading-step" id="ls-5"><div class="loading-dot"></div>Rédaction des 11 rubriques FEDER</div>
+              <div class="loading-step" id="ls-6"><div class="loading-dot"></div>Score de maturité et checklist</div>
+            </div>
+          </div>
+        </div>
+        <div class="result-container" id="result-container">
+          <div class="result-topbar">
+            <div class="result-meta">
+              <div class="result-title" id="result-title">Dossier FEDER</div>
+              <div class="result-info" id="result-info"></div>
+            </div>
+            <div class="result-actions">
+              <button class="btn-action" onclick="copyToClipboard()">📋 Copier</button>
+              <button class="btn-action" onclick="downloadTxt()">⬇ .txt</button>
+              <button class="btn-action word" onclick="downloadWord()">📄 Word</button>
+            </div>
+          </div>
+          <div class="docx-notice" id="docx-notice">📄 Fichier Word généré — téléchargement démarré automatiquement.</div>
+          <div class="score-banner">
+            <div class="score-header">
+              <div><div class="score-label">Score de maturité global</div><div class="score-global" id="score-global">—/60</div></div>
+              <div class="score-mention" id="score-mention">—</div>
+            </div>
+            <div class="score-grid" id="score-grid"></div>
+          </div>
+          <div class="tabs">
+            <button class="tab active" onclick="showTab('synthese',this)">A. Synthèse</button>
+            <button class="tab" onclick="showTab('dossier',this)">B. Dossier FEDER</button>
+            <button class="tab" onclick="showTab('questions',this)">C. Questions</button>
+            <button class="tab" onclick="showTab('checklist',this)">D. Checklist</button>
+          </div>
+          <div class="tab-content active" id="tab-synthese"></div>
+          <div class="tab-content" id="tab-dossier"></div>
+          <div class="tab-content" id="tab-questions"></div>
+          <div class="tab-content" id="tab-checklist"></div>
+        </div>
+      </main>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════
+     SCREEN: HISTORY
+══════════════════════════ -->
+<div class="screen" id="screen-history">
+  <div style="flex:1;">
+    <div class="history-header">
+      <div>
+        <div class="history-title">Historique des dossiers</div>
+        <div class="history-meta" id="hist-meta">Stockage local (navigateur)</div>
+      </div>
+      <div class="history-actions">
+        <button class="btn-action" onclick="exportAllHistory()">⬇ Exporter tout</button>
+        <button class="btn-action" onclick="if(confirm('Supprimer tout l\'historique ?')) clearHistory()" style="color:var(--manquant);border-color:#FFCDD2;">🗑 Tout effacer</button>
+      </div>
+    </div>
+    <div id="history-container"></div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ══════════════════════════════════════════
+// STATE
+// ══════════════════════════════════════════
+let resultData = null;
+let currentMode = 'transcription';
+let guidedStep = 1;
+const GUIDED_STEPS = 5;
+const GUIDED_LABELS = ['Entreprise','Projet','Finances','Impact','Génération'];
+const HISTORY_KEY = 'losko_feder_history';
+
+// ══════════════════════════════════════════
+// NAVIGATION
+// ══════════════════════════════════════════
+function showScreen(name) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById('screen-' + name).classList.add('active');
+  document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('nav-' + name).classList.add('active');
+  if (name === 'history') renderHistory();
 }
 
-const data = JSON.parse(fs.readFileSync(inputPath, 'utf8'));
-
-// ─── COLORS ───
-const BORDEAUX = '6B1F3A';
-const BORDEAUX_DARK = '4A1228';
-const BORDEAUX_PALE = 'F5EEF1';
-const ANTHRACITE = '1C1C1E';
-const GRAY_MID = '8E8E93';
-const GRAY_PALE = 'F2F2F7';
-const WHITE = 'FFFFFF';
-const CONFIRM_BG = 'E8F5E9';
-const DEDUIT_BG = 'E3F2FD';
-const HYPOTHESE_BG = 'FFF3E0';
-const MANQUANT_BG = 'FFEBEE';
-
-const border = { style: BorderStyle.SINGLE, size: 1, color: 'DDDDDD' };
-const borders = { top: border, bottom: border, left: border, right: border };
-const noBorder = { style: BorderStyle.NONE, size: 0, color: 'FFFFFF' };
-const noBorders = { top: noBorder, bottom: noBorder, left: noBorder, right: noBorder };
-
-// ─── HELPERS ───
-function sp(text, opts = {}) {
-  return new Paragraph({
-    children: [new TextRun({ text, font: 'Arial', ...opts })],
-    spacing: { after: opts.spacingAfter || 120 },
-    alignment: opts.alignment || AlignmentType.LEFT
-  });
+function setMode(mode) {
+  currentMode = mode;
+  document.getElementById('mode-transcription-tab').classList.toggle('active', mode === 'transcription');
+  document.getElementById('mode-guided-tab').classList.toggle('active', mode === 'guided');
+  document.getElementById('transcription-panel').style.display = mode === 'transcription' ? 'flex' : 'none';
+  document.getElementById('guided-panel').style.display = mode === 'guided' ? 'flex' : 'none';
+  if (mode === 'guided') { guidedStep = 1; renderGuidedStep(); }
 }
 
-function heading1(text) {
-  return new Paragraph({
-    heading: HeadingLevel.HEADING_1,
-    children: [new TextRun({ text, font: 'Arial', size: 28, bold: true, color: BORDEAUX_DARK })],
-    spacing: { before: 400, after: 160 },
-    border: { bottom: { style: BorderStyle.SINGLE, size: 8, color: BORDEAUX, space: 4 } }
-  });
-}
+// ══════════════════════════════════════════
+// GUIDED FORM
+// ══════════════════════════════════════════
+function renderGuidedStep() {
+  // Steps bar
+  const bar = document.getElementById('progress-steps');
+  bar.innerHTML = Array.from({length: GUIDED_STEPS}, (_,i) => {
+    const cls = i+1 < guidedStep ? 'ps done' : i+1 === guidedStep ? 'ps active' : 'ps';
+    return `<div class="${cls}"></div>`;
+  }).join('');
+  document.getElementById('gp-step-label').textContent = `Étape ${guidedStep}/${GUIDED_STEPS} — ${GUIDED_LABELS[guidedStep-1]}`;
 
-function heading2(text) {
-  return new Paragraph({
-    heading: HeadingLevel.HEADING_2,
-    children: [new TextRun({ text, font: 'Arial', size: 24, bold: true, color: BORDEAUX })],
-    spacing: { before: 280, after: 120 }
-  });
-}
+  // Show step
+  document.querySelectorAll('.guided-step').forEach(s => s.classList.remove('active'));
+  document.getElementById('gstep-' + guidedStep).classList.add('active');
 
-function sectionTitle(num, title) {
-  return new Paragraph({
-    children: [
-      new TextRun({ text: `${num}. `, font: 'Arial', size: 22, bold: true, color: BORDEAUX }),
-      new TextRun({ text: title.toUpperCase(), font: 'Arial', size: 22, bold: true, color: BORDEAUX_DARK })
-    ],
-    spacing: { before: 320, after: 160 },
-    border: { bottom: { style: BorderStyle.SINGLE, size: 4, color: BORDEAUX_PALE, space: 4 } }
-  });
-}
-
-function bodyText(text) {
-  if (!text) return sp('', { color: GRAY_MID, italics: true });
-  const lines = text.split('\n').filter(l => l.trim());
-  return lines.map(line => new Paragraph({
-    children: [new TextRun({ text: line, font: 'Arial', size: 22, color: ANTHRACITE })],
-    spacing: { after: 80 }
-  }));
-}
-
-function certColor(cert) {
-  const map = { 'CONFIRMÉ': CONFIRM_BG, 'DÉDUIT': DEDUIT_BG, 'HYPOTHÈSE': HYPOTHESE_BG, 'MANQUANT': MANQUANT_BG };
-  return map[cert] || GRAY_PALE;
-}
-
-function certLabel(cert) {
-  const map = { 'CONFIRMÉ': '✓ Confirmé', 'DÉDUIT': '~ Déduit', 'HYPOTHÈSE': '? Hypothèse', 'MANQUANT': '✗ Manquant' };
-  return map[cert] || cert;
-}
-
-function emptyPara(size = 80) {
-  return new Paragraph({ children: [new TextRun('')], spacing: { after: size } });
-}
-
-function pageBreak() {
-  return new Paragraph({ children: [new PageBreak()], spacing: { after: 0 } });
-}
-
-// ─── COVER PAGE ───
-function buildCoverPage(data) {
-  const meta = data.meta || {};
-  const score = data.score || {};
-  const client = data._client || '';
-  const date = data._date || new Date().toLocaleDateString('fr-FR');
-
-  return [
-    emptyPara(800),
-    new Paragraph({
-      children: [new TextRun({ text: 'LOSKO', font: 'Arial', size: 52, bold: true, color: BORDEAUX_DARK })],
-      alignment: AlignmentType.CENTER,
-      spacing: { after: 60 }
-    }),
-    new Paragraph({
-      children: [new TextRun({ text: 'FEDER Agent', font: 'Arial', size: 36, color: BORDEAUX })],
-      alignment: AlignmentType.CENTER,
-      spacing: { after: 400 }
-    }),
-    new Paragraph({
-      children: [new TextRun({ text: 'DOSSIER DE DEMANDE DE FINANCEMENT FEDER', font: 'Arial', size: 24, bold: true, color: ANTHRACITE })],
-      alignment: AlignmentType.CENTER,
-      spacing: { after: 120 }
-    }),
-    client ? new Paragraph({
-      children: [new TextRun({ text: client, font: 'Arial', size: 32, bold: true, color: BORDEAUX_DARK })],
-      alignment: AlignmentType.CENTER,
-      spacing: { after: 120 }
-    }) : emptyPara(120),
-    new Paragraph({
-      children: [new TextRun({ text: `Guadeloupe — Région Ultrapériphérique de l'Union Européenne`, font: 'Arial', size: 20, color: GRAY_MID, italics: true })],
-      alignment: AlignmentType.CENTER,
-      spacing: { after: 600 }
-    }),
-    // Meta table
-    new Table({
-      width: { size: 7000, type: WidthType.DXA },
-      columnWidths: [3000, 4000],
-      rows: [
-        ['Secteur', meta.secteur_principal || '—'],
-        ['APE', `${meta.ape_identifie || '—'} — ${meta.ape_intitule || '—'}`],
-        ['Score de maturité', `${score.total || 0}/60 — ${score.mention || '—'}`],
-        ['Date de traitement', date],
-      ].map(([label, val]) => new TableRow({
-        children: [
-          new TableCell({
-            borders, width: { size: 3000, type: WidthType.DXA },
-            shading: { fill: BORDEAUX_PALE, type: ShadingType.CLEAR },
-            margins: { top: 80, bottom: 80, left: 120, right: 120 },
-            children: [new Paragraph({ children: [new TextRun({ text: label, font: 'Arial', size: 18, bold: true, color: BORDEAUX_DARK })] })]
-          }),
-          new TableCell({
-            borders, width: { size: 4000, type: WidthType.DXA },
-            margins: { top: 80, bottom: 80, left: 120, right: 120 },
-            children: [new Paragraph({ children: [new TextRun({ text: val, font: 'Arial', size: 18, color: ANTHRACITE })] })]
-          })
-        ]
-      })),
-      alignment: AlignmentType.CENTER
-    }),
-    emptyPara(600),
-    new Paragraph({
-      children: [new TextRun({ text: 'LOSKO CORPORATION — Assistance à Maîtrise d\'Ouvrage', font: 'Arial', size: 16, color: GRAY_MID })],
-      alignment: AlignmentType.CENTER,
-      spacing: { after: 40 }
-    }),
-    new Paragraph({
-      children: [new TextRun({ text: 'Les Abymes, Guadeloupe', font: 'Arial', size: 16, color: GRAY_MID })],
-      alignment: AlignmentType.CENTER,
-      spacing: { after: 0 }
-    }),
-    pageBreak()
-  ];
-}
-
-// ─── SYNTHÈSE ───
-function buildSyntheseSection(data) {
-  const synth = data.synthese || [];
-  const meta = data.meta || {};
-
-  const rows = synth.map(row => new TableRow({
-    children: [
-      new TableCell({
-        borders, width: { size: 2800, type: WidthType.DXA },
-        shading: { fill: GRAY_PALE, type: ShadingType.CLEAR },
-        margins: { top: 80, bottom: 80, left: 120, right: 120 },
-        children: [new Paragraph({ children: [new TextRun({ text: row.champ, font: 'Arial', size: 18, bold: true, color: ANTHRACITE })] })]
-      }),
-      new TableCell({
-        borders, width: { size: 4800, type: WidthType.DXA },
-        margins: { top: 80, bottom: 80, left: 120, right: 120 },
-        children: [new Paragraph({ children: [new TextRun({ text: row.valeur || '—', font: 'Arial', size: 18, color: ANTHRACITE })] })]
-      }),
-      new TableCell({
-        borders, width: { size: 1760, type: WidthType.DXA },
-        shading: { fill: certColor(row.certitude), type: ShadingType.CLEAR },
-        margins: { top: 80, bottom: 80, left: 120, right: 120 },
-        children: [new Paragraph({ children: [new TextRun({ text: certLabel(row.certitude), font: 'Arial', size: 16, color: ANTHRACITE })] })]
-      })
-    ]
-  }));
-
-  const header = new TableRow({
-    children: [
-      new TableCell({
-        borders, width: { size: 2800, type: WidthType.DXA },
-        shading: { fill: BORDEAUX, type: ShadingType.CLEAR },
-        margins: { top: 80, bottom: 80, left: 120, right: 120 },
-        children: [new Paragraph({ children: [new TextRun({ text: 'Champ', font: 'Arial', size: 18, bold: true, color: WHITE })] })]
-      }),
-      new TableCell({
-        borders, width: { size: 4800, type: WidthType.DXA },
-        shading: { fill: BORDEAUX, type: ShadingType.CLEAR },
-        margins: { top: 80, bottom: 80, left: 120, right: 120 },
-        children: [new Paragraph({ children: [new TextRun({ text: 'Valeur', font: 'Arial', size: 18, bold: true, color: WHITE })] })]
-      }),
-      new TableCell({
-        borders, width: { size: 1760, type: WidthType.DXA },
-        shading: { fill: BORDEAUX, type: ShadingType.CLEAR },
-        margins: { top: 80, bottom: 80, left: 120, right: 120 },
-        children: [new Paragraph({ children: [new TextRun({ text: 'Niveau', font: 'Arial', size: 18, bold: true, color: WHITE })] })]
-      })
-    ]
-  });
-
-  const anglesBlock = (meta.angles_guadeloupe_selectionnes || []).length > 0 ? [
-    emptyPara(120),
-    heading2('Angles de valorisation Guadeloupe retenus'),
-    ...(meta.angles_guadeloupe_selectionnes || []).map(a => new Paragraph({
-      numbering: { reference: 'bullets', level: 0 },
-      children: [new TextRun({ text: a, font: 'Arial', size: 20, color: BORDEAUX_DARK })]
-    }))
-  ] : [];
-
-  return [
-    heading1('A. FICHE DE SYNTHÈSE'),
-    emptyPara(80),
-    new Table({ width: { size: 9360, type: WidthType.DXA }, columnWidths: [2800, 4800, 1760], rows: [header, ...rows] }),
-    ...anglesBlock,
-    pageBreak()
-  ];
-}
-
-// ─── DOSSIER FEDER ───
-function buildDossierSection(data) {
-  const rubriques = data.dossier || [];
-  const items = [heading1('B. DOSSIER FEDER RÉDIGÉ'), emptyPara(80)];
-
-  rubriques.forEach(r => {
-    items.push(sectionTitle(r.num, r.titre));
-    const lines = bodyText(r.contenu);
-    if (Array.isArray(lines)) items.push(...lines);
-    else items.push(lines);
-    items.push(emptyPara(160));
-  });
-
-  items.push(pageBreak());
-  return items;
-}
-
-// ─── QUESTIONS ───
-function buildQuestionsSection(data) {
-  const q = data.questions || {};
-  const items = [heading1('C. QUESTIONS MANQUANTES'), emptyPara(80)];
-
-  const renderGroup = (label, list, color) => {
-    if (!list || !list.length) return;
-    items.push(heading2(label));
-    list.forEach(qi => {
-      items.push(new Paragraph({
-        children: [
-          new TextRun({ text: `Q${qi.num}. `, font: 'Arial', size: 20, bold: true, color }),
-          new TextRun({ text: qi.question, font: 'Arial', size: 20, color: ANTHRACITE })
-        ],
-        spacing: { after: 100 }
-      }));
-    });
-    items.push(emptyPara(80));
-  };
-
-  renderGroup('Critiques — Bloquantes pour le dépôt', q.critiques, 'B71C1C');
-  renderGroup('Importantes — Renforcent la solidité', q.importantes, 'E65100');
-  renderGroup('Optionnelles — Améliorent le dossier', q.optionnelles, '1B5E20');
-  items.push(pageBreak());
-  return items;
-}
-
-// ─── CHECKLIST ───
-function buildChecklistSection(data) {
-  const cl = data.checklist || {};
-  const items = [heading1('D. CHECKLIST DE DÉPÔT'), emptyPara(80)];
-
-  const renderCL = (label, list, icon) => {
-    if (!list || !list.length) return;
-    items.push(heading2(label));
-    list.forEach(item => {
-      items.push(new Paragraph({
-        children: [new TextRun({ text: `${icon}  ${item}`, font: 'Arial', size: 20, color: ANTHRACITE })],
-        spacing: { after: 80 }
-      }));
-    });
-    items.push(emptyPara(100));
-  };
-
-  renderCL('Disponible', cl.disponible, '✅');
-  renderCL('Manquant', cl.manquant, '❌');
-  renderCL('À vérifier', cl.a_verifier, '⚠');
-  renderCL('Pièces probablement nécessaires', cl.pieces_probables, '📎');
-  items.push(pageBreak());
-  return items;
-}
-
-// ─── SCORE ───
-function buildScoreSection(data) {
-  const score = data.score || {};
-  const axes = score.axes || [];
-  const items = [heading1('E. SCORE DE MATURITÉ'), emptyPara(80)];
-
-  // Global
-  items.push(new Paragraph({
-    children: [
-      new TextRun({ text: 'Score global : ', font: 'Arial', size: 24, bold: true, color: BORDEAUX_DARK }),
-      new TextRun({ text: `${score.total || 0}/60`, font: 'Arial', size: 32, bold: true, color: BORDEAUX }),
-      new TextRun({ text: `  — ${score.mention || '—'}`, font: 'Arial', size: 24, color: ANTHRACITE })
-    ],
-    spacing: { after: 200 }
-  }));
-
-  // Axes table
-  const axeHeader = new TableRow({
-    children: [
-      new TableCell({ borders, width: { size: 4000, type: WidthType.DXA }, shading: { fill: BORDEAUX, type: ShadingType.CLEAR }, margins: { top: 80, bottom: 80, left: 120, right: 120 }, children: [new Paragraph({ children: [new TextRun({ text: 'Axe d\'évaluation', font: 'Arial', size: 18, bold: true, color: WHITE })] })] }),
-      new TableCell({ borders, width: { size: 1000, type: WidthType.DXA }, shading: { fill: BORDEAUX, type: ShadingType.CLEAR }, margins: { top: 80, bottom: 80, left: 120, right: 120 }, children: [new Paragraph({ children: [new TextRun({ text: 'Note', font: 'Arial', size: 18, bold: true, color: WHITE })] })] }),
-      new TableCell({ borders, width: { size: 4360, type: WidthType.DXA }, shading: { fill: BORDEAUX, type: ShadingType.CLEAR }, margins: { top: 80, bottom: 80, left: 120, right: 120 }, children: [new Paragraph({ children: [new TextRun({ text: 'Commentaire', font: 'Arial', size: 18, bold: true, color: WHITE })] })] }),
-    ]
-  });
-
-  const axeRows = axes.map((ax, i) => new TableRow({
-    children: [
-      new TableCell({ borders, width: { size: 4000, type: WidthType.DXA }, shading: { fill: i % 2 === 0 ? WHITE : GRAY_PALE, type: ShadingType.CLEAR }, margins: { top: 80, bottom: 80, left: 120, right: 120 }, children: [new Paragraph({ children: [new TextRun({ text: ax.axe, font: 'Arial', size: 18, bold: true, color: ANTHRACITE })] })] }),
-      new TableCell({ borders, width: { size: 1000, type: WidthType.DXA }, shading: { fill: i % 2 === 0 ? WHITE : GRAY_PALE, type: ShadingType.CLEAR }, margins: { top: 80, bottom: 80, left: 120, right: 120 }, children: [new Paragraph({ children: [new TextRun({ text: `${ax.note}/10`, font: 'Arial', size: 18, bold: true, color: BORDEAUX })] })] }),
-      new TableCell({ borders, width: { size: 4360, type: WidthType.DXA }, shading: { fill: i % 2 === 0 ? WHITE : GRAY_PALE, type: ShadingType.CLEAR }, margins: { top: 80, bottom: 80, left: 120, right: 120 }, children: [new Paragraph({ children: [new TextRun({ text: ax.commentaire || '', font: 'Arial', size: 18, color: ANTHRACITE })] })] }),
-    ]
-  }));
-
-  items.push(new Table({ width: { size: 9360, type: WidthType.DXA }, columnWidths: [4000, 1000, 4360], rows: [axeHeader, ...axeRows] }));
-
-  if (score.recommandation) {
-    items.push(emptyPara(200));
-    items.push(new Paragraph({
-      children: [
-        new TextRun({ text: 'Recommandation prioritaire : ', font: 'Arial', size: 20, bold: true, color: BORDEAUX_DARK }),
-        new TextRun({ text: score.recommandation, font: 'Arial', size: 20, color: ANTHRACITE })
-      ],
-      spacing: { after: 120 },
-      shading: { fill: BORDEAUX_PALE, type: ShadingType.CLEAR }
-    }));
+  // Buttons
+  document.getElementById('btn-prev').style.display = guidedStep === 1 ? 'none' : 'block';
+  const next = document.getElementById('btn-next');
+  if (guidedStep === GUIDED_STEPS) {
+    next.textContent = '⚡ Générer le dossier FEDER';
+    next.onclick = generateFromGuided;
+  } else {
+    next.textContent = 'Suivant →';
+    next.onclick = guidedNext;
   }
 
-  return items;
+  // Recap on step 5
+  if (guidedStep === GUIDED_STEPS) updateGuidedRecap();
 }
 
-// ─── FOOTER ───
-function buildFooter() {
-  return new Footer({
-    children: [
-      new Paragraph({
-        children: [
-          new TextRun({ text: 'LOSKO CORPORATION — Assistance à Maîtrise d\'Ouvrage — Guadeloupe     |     Page ', font: 'Arial', size: 16, color: GRAY_MID }),
-          new PageNumberElement()
-        ],
-        alignment: AlignmentType.CENTER
-      })
-    ]
+function guidedNext() {
+  if (guidedStep === 1 && !document.getElementById('g-raison').value.trim()) {
+    alert('Veuillez renseigner la raison sociale.'); return;
+  }
+  if (guidedStep === 2 && !document.getElementById('g-intitule').value.trim()) {
+    alert('Veuillez renseigner l\'intitulé du projet.'); return;
+  }
+  if (guidedStep < GUIDED_STEPS) { guidedStep++; renderGuidedStep(); }
+}
+
+function guidedPrev() {
+  if (guidedStep > 1) { guidedStep--; renderGuidedStep(); }
+}
+
+function updateGuidedRecap() {
+  const r = v => document.getElementById(v).value || '—';
+  document.getElementById('guided-recap').innerHTML =
+    `Client : <strong>${r('g-raison')}</strong> · Projet : <strong>${r('g-intitule')}</strong> · ` +
+    `Coût : <strong>${r('g-cout')}</strong> · FEDER : <strong>${r('g-feder')}</strong>`;
+}
+
+function buildGuidedTranscript() {
+  const v = id => document.getElementById(id).value.trim();
+  return [
+    `ENTREPRISE : ${v('g-raison')}`,
+    v('g-forme') ? `Forme juridique : ${v('g-forme')}` : '',
+    v('g-creation') ? `Créée en : ${v('g-creation')}` : '',
+    v('g-adresse') ? `Localisation : ${v('g-adresse')}` : '',
+    v('g-effectifs') ? `Effectifs : ${v('g-effectifs')}` : '',
+    v('g-ca') ? `Chiffre d'affaires : ${v('g-ca')}` : '',
+    v('g-activite') ? `Activité : ${v('g-activite')}` : '',
+    '',
+    `PROJET : ${v('g-intitule')}`,
+    v('g-description') ? `Description : ${v('g-description')}` : '',
+    v('g-probleme') ? `Problème / besoin : ${v('g-probleme')}` : '',
+    v('g-investissements') ? `Investissements prévus : ${v('g-investissements')}` : '',
+    '',
+    v('g-cout') ? `Coût total : ${v('g-cout')}` : '',
+    v('g-feder') ? `Part FEDER souhaitée : ${v('g-feder')}` : '',
+    v('g-autres-fin') ? `Autres financements : ${v('g-autres-fin')}` : '',
+    v('g-calendrier') ? `Calendrier : ${v('g-calendrier')}` : '',
+    v('g-emplois') ? `Emplois : ${v('g-emplois')}` : '',
+    '',
+    v('g-impact-eco') ? `Impact économique : ${v('g-impact-eco')}` : '',
+    v('g-impact-terr') ? `Impact territorial : ${v('g-impact-terr')}` : '',
+    v('g-impact-env') ? `Impact environnemental : ${v('g-impact-env')}` : '',
+    v('g-complementaire') ? `Informations complémentaires : ${v('g-complementaire')}` : '',
+  ].filter(Boolean).join('\n');
+}
+
+// ══════════════════════════════════════════
+// GENERATE
+// ══════════════════════════════════════════
+function getSystemPrompt() {
+  return `Tu es LOSKO FEDER Agent, un assistant expert en montage de dossiers FEDER pour des porteurs de projet en Guadeloupe. Tu travailles pour LOSKO CORPORATION, cabinet AMO spécialisé dans les financements européens (FEDER) pour les DOM-TOM.
+
+TON RÔLE : Transformer des informations sur un projet en un dossier FEDER complet, structuré, rédigé et évalué, exploitable pour un dépôt en Guadeloupe.
+
+RÈGLES ABSOLUES :
+1. Ne jamais inventer une donnée factuelle absente
+2. Distinguer : [CONFIRMÉ] donnée explicite · [DÉDUIT] inférence logique · [HYPOTHÈSE] supposition cohérente · [MANQUANT] information absente
+3. Style professionnel, administratif, institutionnel
+4. Adapter le vocabulaire au secteur identifié
+5. Intégrer les spécificités Guadeloupe pertinentes
+
+CONTEXTE TERRITORIAL : La Guadeloupe est une RUP (région ultrapériphérique) de l'UE. Valoriser selon pertinence : création d'emplois locaux, réduction dépendance aux importations, structuration filières locales, transition écologique, économie circulaire, résilience économique, innovation locale, montée en gamme, autonomie productive, ancrage territorial.
+
+RETOURNE UNIQUEMENT ce JSON valide, rien d'autre :
+{"meta":{"secteur_principal":"","secteur_elargi":"","ape_identifie":"","ape_intitule":"","angles_guadeloupe_selectionnes":[]},"synthese":[{"champ":"Raison sociale","valeur":"","certitude":""},{"champ":"Localisation","valeur":"","certitude":""},{"champ":"Secteur d'activité","valeur":"","certitude":""},{"champ":"Code APE","valeur":"","certitude":""},{"champ":"Description du projet","valeur":"","certitude":""},{"champ":"Montant total du projet","valeur":"","certitude":""},{"champ":"Part FEDER sollicitée","valeur":"","certitude":""},{"champ":"Effectifs actuels","valeur":"","certitude":""},{"champ":"Emplois créés prévus","valeur":"","certitude":""},{"champ":"Calendrier prévisionnel","valeur":"","certitude":""},{"champ":"Points de vigilance","valeur":"","certitude":""}],"dossier":[{"num":"1","titre":"Résumé exécutif","contenu":""},{"num":"2","titre":"Présentation de l'entreprise","contenu":""},{"num":"3","titre":"Contexte et problématique","contenu":""},{"num":"4","titre":"Description détaillée du projet","contenu":""},{"num":"5","titre":"Objectifs du projet","contenu":""},{"num":"6","titre":"Retombées économiques","contenu":""},{"num":"7","titre":"Retombées territoriales","contenu":""},{"num":"8","titre":"Retombées environnementales","contenu":""},{"num":"9","titre":"Calendrier prévisionnel","contenu":""},{"num":"10","titre":"Plan de financement prévisionnel","contenu":""},{"num":"11","titre":"Analyse de cohérence FEDER","contenu":""}],"questions":{"critiques":[{"num":1,"question":""}],"importantes":[{"num":2,"question":""}],"optionnelles":[{"num":3,"question":""}]},"checklist":{"disponible":[],"manquant":[],"a_verifier":[],"pieces_probables":[]},"score":{"total":0,"mention":"En cours","axes":[{"axe":"Complétude administrative","note":0,"commentaire":""},{"axe":"Solidité économique","note":0,"commentaire":""},{"axe":"Cohérence territoriale","note":0,"commentaire":""},{"axe":"Cohérence sectorielle","note":0,"commentaire":""},{"axe":"Lisibilité du projet","note":0,"commentaire":""},{"axe":"Niveau de préparation dépôt","note":0,"commentaire":""}],"recommandation":""}}
+Remplis TOUS les champs. Chaque rubrique dossier : minimum 6 phrases rédigées. Notes score sur 10. Total = somme des 6 notes.`;
+}
+
+async function callAPI(apiKey, userPrompt) {
+  const resp = await fetch('https://api.anthropic.com/v1/messages', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'x-api-key': apiKey,
+      'anthropic-version': '2023-06-01',
+      'anthropic-dangerous-direct-browser-access': 'true'
+    },
+    body: JSON.stringify({
+      model: 'claude-sonnet-4-20250514',
+      max_tokens: 8000,
+      system: getSystemPrompt(),
+      messages: [{ role: 'user', content: userPrompt }]
+    })
   });
+  if (!resp.ok) { const e = await resp.json(); throw new Error(e.error?.message || `Erreur API ${resp.status}`); }
+  const d = await resp.json();
+  const raw = d.content[0].text;
+  const m = raw.match(/\{[\s\S]*\}/);
+  return JSON.parse(m ? m[0] : raw);
 }
 
-// ─── MAIN ───
-async function generateDoc() {
-  const allChildren = [
-    ...buildCoverPage(data),
-    ...buildSyntheseSection(data),
-    ...buildDossierSection(data),
-    ...buildQuestionsSection(data),
-    ...buildChecklistSection(data),
-    ...buildScoreSection(data)
-  ];
+async function generateFromTranscription() {
+  const transcript = document.getElementById('t-transcript').value.trim();
+  const apiKey = document.getElementById('t-apikey').value.trim();
+  const client = document.getElementById('t-client').value.trim();
+  const ape = document.getElementById('t-ape').value.trim();
+  const sector = document.getElementById('t-sector').value;
+  const date = document.getElementById('t-date').value;
 
-  const doc = new Document({
-    numbering: {
-      config: [
-        {
-          reference: 'bullets',
-          levels: [{
-            level: 0, format: LevelFormat.BULLET, text: '•', alignment: AlignmentType.LEFT,
-            style: { paragraph: { indent: { left: 720, hanging: 360 } }, run: { font: 'Arial', size: 20 } }
-          }]
-        }
-      ]
-    },
-    styles: {
-      default: { document: { run: { font: 'Arial', size: 22 } } },
-      paragraphStyles: [
-        { id: 'Heading1', name: 'Heading 1', basedOn: 'Normal', next: 'Normal', quickFormat: true,
-          run: { size: 28, bold: true, font: 'Arial', color: BORDEAUX_DARK },
-          paragraph: { spacing: { before: 400, after: 160 }, outlineLevel: 0 } },
-        { id: 'Heading2', name: 'Heading 2', basedOn: 'Normal', next: 'Normal', quickFormat: true,
-          run: { size: 24, bold: true, font: 'Arial', color: BORDEAUX },
-          paragraph: { spacing: { before: 280, after: 120 }, outlineLevel: 1 } }
-      ]
-    },
-    sections: [{
-      properties: {
-        page: {
-          size: { width: 11906, height: 16838 },
-          margin: { top: 1440, right: 1440, bottom: 1440, left: 1440 }
-        }
+  hideError('t-error');
+  if (!transcript) { showError('t-error', 'Veuillez coller la transcription.'); return; }
+  if (!apiKey) { showError('t-error', 'Clé API Anthropic requise.'); return; }
+  if (transcript.split(/\s+/).length < 30) { showError('t-error', 'Transcription trop courte (minimum 30 mots).'); return; }
+
+  const prompt = `TRANSCRIPTION — ${date || 'Date non précisée'}\nClient : ${client || 'Non précisé'}\nCode APE : ${ape || 'Non fourni'}\nSecteur : ${sector || 'À détecter'}\n\n---\n${transcript}\n---\n\nProduis le dossier FEDER complet.`;
+  await runGeneration(apiKey, prompt, client, date);
+}
+
+async function generateFromGuided() {
+  const apiKey = document.getElementById('g-apikey').value.trim();
+  const client = document.getElementById('g-raison').value.trim();
+  const ape = document.getElementById('g-ape').value.trim();
+  const date = new Date().toISOString().slice(0,10);
+
+  document.getElementById('g-error').style.display = 'none';
+  if (!apiKey) { showError('g-error', 'Clé API Anthropic requise.'); return; }
+
+  const transcript = buildGuidedTranscript();
+  const prompt = `FORMULAIRE GUIDÉ — ${date}\nClient : ${client}\nCode APE : ${ape || 'Non fourni'}\n\n---\n${transcript}\n---\n\nProduis le dossier FEDER complet.`;
+  await runGeneration(apiKey, prompt, client, date);
+}
+
+let loadingInterval = null;
+async function runGeneration(apiKey, prompt, client, date) {
+  setState('loading');
+  startLoading();
+  document.getElementById('btn-gen-transcript').disabled = true;
+  document.getElementById('btn-next').disabled = true;
+
+  try {
+    const data = await callAPI(apiKey, prompt);
+    data._client = client;
+    data._date = date;
+    data._mode = currentMode;
+    data._generated = new Date().toISOString();
+    resultData = data;
+    saveToHistory(data);
+    stopLoading();
+    renderResult(data);
+    setState('result');
+    updateHistCount();
+  } catch(err) {
+    stopLoading();
+    setState('empty');
+    const errId = currentMode === 'guided' ? 'g-error' : 't-error';
+    showError(errId, 'Erreur : ' + err.message);
+  } finally {
+    document.getElementById('btn-gen-transcript').disabled = false;
+    document.getElementById('btn-next').disabled = false;
+  }
+}
+
+function startLoading() {
+  const ids = ['ls-1','ls-2','ls-3','ls-4','ls-5','ls-6'];
+  let cur = 0;
+  ids.forEach(id => document.getElementById(id).className = 'loading-step');
+  document.getElementById(ids[0]).classList.add('active');
+  loadingInterval = setInterval(() => {
+    if (cur < ids.length - 1) {
+      document.getElementById(ids[cur]).classList.replace('active','done') || document.getElementById(ids[cur]).classList.add('done');
+      cur++;
+      document.getElementById(ids[cur]).classList.add('active');
+    }
+  }, 2200);
+}
+
+function stopLoading() {
+  if (loadingInterval) { clearInterval(loadingInterval); loadingInterval = null; }
+}
+
+// ══════════════════════════════════════════
+// RENDER RESULT
+// ══════════════════════════════════════════
+function setState(state) {
+  document.getElementById('empty-state').style.display = state === 'empty' ? 'flex' : 'none';
+  document.getElementById('loading-state').style.display = state === 'loading' ? 'flex' : 'none';
+  document.getElementById('result-container').style.display = state === 'result' ? 'block' : 'none';
+}
+
+function certTag(c) {
+  const m = {'CONFIRMÉ':['tag-confirm','✓'],'DÉDUIT':['tag-deduit','~'],'HYPOTHÈSE':['tag-hypothese','?'],'MANQUANT':['tag-manquant','✗']};
+  const [cls,ic] = m[c] || ['tag-hypothese',c];
+  return `<span class="tag ${cls}">${ic} ${c}</span>`;
+}
+
+function mentionStyle(m) {
+  return {'Insuffisant':'background:#FFEBEE;color:#B71C1C','En cours':'background:#FFF3E0;color:#E65100','Avancé':'background:#E3F2FD;color:#1565C0','Prêt':'background:#E8F5E9;color:#1B5E20'}[m] || 'background:#F5F5F5;color:#666';
+}
+
+function renderResult(data) {
+  const client = data._client || 'Dossier FEDER';
+  document.getElementById('result-title').textContent = client ? `Dossier FEDER — ${client}` : 'Dossier FEDER';
+  document.getElementById('result-info').textContent = [
+    data._date ? `${data._date}` : null,
+    data.meta?.secteur_principal || null,
+    data.meta?.ape_identifie ? `APE ${data.meta.ape_identifie}` : null
+  ].filter(Boolean).join(' · ');
+
+  // Score
+  const sc = data.score || {};
+  document.getElementById('score-global').textContent = `${sc.total||0}/60`;
+  const men = document.getElementById('score-mention');
+  men.textContent = sc.mention || '—';
+  men.style.cssText = mentionStyle(sc.mention);
+  document.getElementById('score-grid').innerHTML = (sc.axes||[]).map(ax => `
+    <div class="score-item">
+      <div class="score-item-label">${ax.axe}</div>
+      <div class="score-item-bar"><div class="score-item-fill" style="width:${ax.note*10}%"></div></div>
+      <div class="score-item-val">${ax.note}/10</div>
+    </div>`).join('');
+
+  // Tab A
+  document.getElementById('tab-synthese').innerHTML = `
+    <div class="doc-block">
+      <div class="doc-block-header" onclick="toggleBlock(this)"><div class="doc-block-num">A</div><div class="doc-block-title">Fiche de synthèse</div><span class="doc-block-chevron">▾</span></div>
+      <div class="doc-block-body" style="padding:0"><table class="synth-table"><thead><tr><th>Champ</th><th>Valeur</th><th>Niveau</th></tr></thead><tbody>
+        ${(data.synthese||[]).map(r=>`<tr><td class="synth-field">${r.champ}</td><td>${r.valeur||'<em style="color:var(--gray-mid)">—</em>'}</td><td>${certTag(r.certitude)}</td></tr>`).join('')}
+      </tbody></table></div>
+    </div>
+    ${(data.meta?.angles_guadeloupe_selectionnes||[]).length?`
+    <div class="doc-block" style="margin-top:10px">
+      <div class="doc-block-header" onclick="toggleBlock(this)"><div class="doc-block-num" style="background:var(--confirm);font-size:10px">🏝</div><div class="doc-block-title">Angles Guadeloupe retenus</div><span class="doc-block-chevron">▾</span></div>
+      <div class="doc-block-body"><div style="display:flex;flex-wrap:wrap;gap:7px">${(data.meta.angles_guadeloupe_selectionnes||[]).map(a=>`<span style="background:var(--bordeaux-muted);color:var(--bordeaux-dark);font-size:11px;padding:4px 10px;border-radius:20px;border:1px solid rgba(107,31,58,.10)">${a}</span>`).join('')}</div>
+      ${data.score?.recommandation?`<div style="margin-top:14px;padding:10px 14px;background:var(--gray-pale);border-radius:var(--radius);font-size:12px"><strong>Recommandation :</strong> ${data.score.recommandation}</div>`:''}</div>
+    </div>`:''}`;
+
+  // Tab B
+  document.getElementById('tab-dossier').innerHTML = (data.dossier||[]).map((r,i)=>`
+    <div class="doc-block" style="margin-bottom:8px ${i>0?';':''}">
+      <div class="doc-block-header" onclick="toggleBlock(this)"><div class="doc-block-num">${r.num}</div><div class="doc-block-title">${r.titre}</div><span class="doc-block-chevron">▾</span></div>
+      <div class="doc-block-body">${r.contenu||'<em style="color:var(--gray-mid)">À compléter.</em>'}</div>
+    </div>`).join('');
+  setTimeout(()=>document.querySelectorAll('#tab-dossier .doc-block').forEach((el,i)=>{if(i>0)el.classList.add('collapsed');}),80);
+
+  // Tab C
+  const q = data.questions||{};
+  document.getElementById('tab-questions').innerHTML = [
+    renderQGroup('Critiques — Bloquantes pour le dépôt', q.critiques||[], 'critical'),
+    renderQGroup('Importantes — Renforcent la solidité', q.importantes||[], 'important'),
+    renderQGroup('Optionnelles — Améliorent le dossier', q.optionnelles||[], 'optional')
+  ].join('');
+
+  // Tab D
+  const cl = data.checklist||{};
+  document.getElementById('tab-checklist').innerHTML = [
+    renderCL('Disponible', cl.disponible||[], '✅'),
+    renderCL('Manquant', cl.manquant||[], '❌'),
+    renderCL('À vérifier', cl.a_verifier||[], '⚠️'),
+    renderCL('Pièces probablement nécessaires', cl.pieces_probables||[], '📎')
+  ].join('');
+}
+
+function renderQGroup(label, items, cls) {
+  if (!items.length) return '';
+  return `<div class="question-group ${cls}"><div class="question-group-label"><div class="priority-dot"></div>${label}</div>${items.map(q=>`<div class="question-item"><span class="q-num">Q${q.num}</span><span>${q.question}</span></div>`).join('')}</div>`;
+}
+
+function renderCL(title, items, icon) {
+  if (!items.length) return '';
+  return `<div class="checklist-section"><div class="checklist-title">${title}</div>${items.map(item=>`<div class="check-item"><span class="check-icon">${icon}</span><span>${item}</span></div>`).join('')}</div>`;
+}
+
+function showTab(name, btn) {
+  document.querySelectorAll('.tab-content').forEach(el=>el.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(el=>el.classList.remove('active'));
+  document.getElementById('tab-'+name).classList.add('active');
+  if(btn) btn.classList.add('active');
+}
+
+function toggleBlock(el) { el.closest('.doc-block').classList.toggle('collapsed'); }
+
+// ══════════════════════════════════════════
+// EXPORT — TXT
+// ══════════════════════════════════════════
+function buildPlainText(data) {
+  const sep = '═'.repeat(56), sep2 = '─'.repeat(56);
+  let out = `${sep}\nLOSKO FEDER AGENT — DOSSIER COMPLET\nClient : ${data._client||'—'}\nSecteur : ${data.meta?.secteur_principal||'—'}\nAPE : ${data.meta?.ape_identifie||'—'}\nScore : ${data.score?.total||0}/60 — ${data.score?.mention||'—'}\n${sep}\n\n`;
+  out += `A. FICHE DE SYNTHÈSE\n${sep2}\n`;
+  (data.synthese||[]).forEach(r=>out+=`${(r.champ+'').padEnd(28)} ${r.valeur||'—'}  [${r.certitude}]\n`);
+  out += `\nB. DOSSIER FEDER\n${sep2}\n\n`;
+  (data.dossier||[]).forEach(r=>out+=`${r.num}. ${r.titre.toUpperCase()}\n\n${r.contenu}\n\n${sep2}\n\n`);
+  out += `C. QUESTIONS\n${sep2}\n\n`;
+  const q=data.questions||{};
+  if(q.critiques?.length){out+='CRITIQUES :\n';q.critiques.forEach(i=>out+=`Q${i.num}. ${i.question}\n`);out+='\n';}
+  if(q.importantes?.length){out+='IMPORTANTES :\n';q.importantes.forEach(i=>out+=`Q${i.num}. ${i.question}\n`);out+='\n';}
+  if(q.optionnelles?.length){out+='OPTIONNELLES :\n';q.optionnelles.forEach(i=>out+=`Q${i.num}. ${i.question}\n`);out+='\n';}
+  out += `D. CHECKLIST\n${sep2}\n`;
+  const cl=data.checklist||{};
+  if(cl.disponible?.length)out+='\n✅ DISPONIBLE :\n'+cl.disponible.map(i=>`  - ${i}`).join('\n')+'\n';
+  if(cl.manquant?.length)out+='\n❌ MANQUANT :\n'+cl.manquant.map(i=>`  - ${i}`).join('\n')+'\n';
+  if(cl.a_verifier?.length)out+='\n⚠ À VÉRIFIER :\n'+cl.a_verifier.map(i=>`  - ${i}`).join('\n')+'\n';
+  if(cl.pieces_probables?.length)out+='\n📎 PIÈCES :\n'+cl.pieces_probables.map(i=>`  - ${i}`).join('\n')+'\n';
+  out += `\nE. SCORE\n${sep2}\n`;
+  (data.score?.axes||[]).forEach(ax=>out+=`${ax.axe.padEnd(33)} ${ax.note}/10  ${ax.commentaire}\n`);
+  out += `\nSCORE GLOBAL : ${data.score?.total||0}/60 — ${data.score?.mention||'—'}\nRECOMMANDATION : ${data.score?.recommandation||'—'}\n\n${sep}\nLOSKO CORPORATION — Les Abymes, Guadeloupe\n`;
+  return out;
+}
+
+function downloadTxt() {
+  if (!resultData) return;
+  const blob = new Blob([buildPlainText(resultData)], {type:'text/plain;charset=utf-8'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `LOSKO_FEDER_${(resultData._client||'dossier').replace(/\s+/g,'_')}_${new Date().toISOString().slice(0,10)}.txt`;
+  a.click();
+  URL.revokeObjectURL(a.href);
+  showToast('Fichier .txt téléchargé');
+}
+
+function copyToClipboard() {
+  if (!resultData) return;
+  navigator.clipboard.writeText(buildPlainText(resultData)).then(()=>showToast('Copié dans le presse-papiers'));
+}
+
+// ══════════════════════════════════════════
+// EXPORT — WORD (via docxtemplater-libre inline)
+// Génération Word côté client avec docx CDN
+// ══════════════════════════════════════════
+function downloadWord(data) {
+  const d = data || resultData;
+  if (!d) return;
+  showToast('Génération Word en cours...');
+
+  // Load docx from CDN if not loaded
+  if (typeof window.docx === 'undefined') {
+    const script = document.createElement('script');
+    script.src = 'https://cdn.jsdelivr.net/npm/docx@9.5.3/build/index.umd.js';
+    script.onload = () => _buildAndDownloadDocx(d);
+    script.onerror = () => { showToast('Erreur chargement librairie Word'); downloadTxt(); };
+    document.head.appendChild(script);
+  } else {
+    _buildAndDownloadDocx(d);
+  }
+}
+
+function _buildAndDownloadDocx(data) {
+  try {
+    const { Document, Packer, Paragraph, TextRun, Table, TableRow, TableCell,
+            Footer, AlignmentType, HeadingLevel, BorderStyle, WidthType,
+            ShadingType, PageNumberElement, PageBreak, LevelFormat } = window.docx;
+
+    const BX = '6B1F3A', BXD = '4A1228', BXP = 'F5EEF1', ANT = '1C1C1E',
+          GMI = '8E8E93', GPL = 'F2F2F7', WHT = 'FFFFFF',
+          CON = 'E8F5E9', DED = 'E3F2FD', HYP = 'FFF3E0', MAN = 'FFEBEE';
+
+    const bd = {style:BorderStyle.SINGLE,size:1,color:'DDDDDD'};
+    const bds = {top:bd,bottom:bd,left:bd,right:bd};
+    const cmap = {'CONFIRMÉ':CON,'DÉDUIT':DED,'HYPOTHÈSE':HYP,'MANQUANT':MAN};
+    const clabel = {'CONFIRMÉ':'✓ Confirmé','DÉDUIT':'~ Déduit','HYPOTHÈSE':'? Hypothèse','MANQUANT':'✗ Manquant'};
+
+    const cell = (text,w,opts={}) => new TableCell({
+      borders:bds, width:{size:w,type:WidthType.DXA},
+      shading:{fill:opts.fill||WHT,type:ShadingType.CLEAR},
+      margins:{top:80,bottom:80,left:120,right:120},
+      children:[new Paragraph({children:[new TextRun({text:String(text||''),font:'Arial',size:opts.size||20,bold:!!opts.bold,color:opts.color||ANT})]})]
+    });
+
+    const h1 = (text) => new Paragraph({
+      heading:HeadingLevel.HEADING_1,
+      children:[new TextRun({text,font:'Arial',size:28,bold:true,color:BXD})],
+      spacing:{before:400,after:160},
+      border:{bottom:{style:BorderStyle.SINGLE,size:8,color:BX,space:4}}
+    });
+
+    const h2 = (text) => new Paragraph({
+      heading:HeadingLevel.HEADING_2,
+      children:[new TextRun({text,font:'Arial',size:24,bold:true,color:BX})],
+      spacing:{before:240,after:120}
+    });
+
+    const body = (text) => {
+      if (!text) return [new Paragraph({children:[new TextRun({text:'—',font:'Arial',size:20,color:GMI,italics:true})],spacing:{after:80}})];
+      return text.split('\n').filter(l=>l.trim()).map(line=>new Paragraph({children:[new TextRun({text:line,font:'Arial',size:20,color:ANT})],spacing:{after:80}}));
+    };
+
+    const pb = () => new Paragraph({children:[new PageBreak()],spacing:{after:0}});
+    const ep = (n=100) => new Paragraph({children:[new TextRun('')],spacing:{after:n}});
+
+    const meta = data.meta||{}, sc = data.score||{}, synth = data.synthese||[];
+    const client = data._client||'';
+
+    // ── COVER ──
+    const cover = [
+      ep(800),
+      new Paragraph({children:[new TextRun({text:'LOSKO',font:'Arial',size:56,bold:true,color:BXD})],alignment:AlignmentType.CENTER,spacing:{after:60}}),
+      new Paragraph({children:[new TextRun({text:'FEDER Agent',font:'Arial',size:36,color:BX})],alignment:AlignmentType.CENTER,spacing:{after:400}}),
+      new Paragraph({children:[new TextRun({text:'DOSSIER DE DEMANDE DE FINANCEMENT FEDER',font:'Arial',size:24,bold:true,color:ANT})],alignment:AlignmentType.CENTER,spacing:{after:120}}),
+      client ? new Paragraph({children:[new TextRun({text:client,font:'Arial',size:32,bold:true,color:BXD})],alignment:AlignmentType.CENTER,spacing:{after:120}}) : ep(120),
+      new Paragraph({children:[new TextRun({text:"Guadeloupe — Région Ultrapériphérique de l'Union Européenne",font:'Arial',size:20,color:GMI,italics:true})],alignment:AlignmentType.CENTER,spacing:{after:600}}),
+      new Table({width:{size:7000,type:WidthType.DXA},columnWidths:[3000,4000],alignment:AlignmentType.CENTER,
+        rows:[['Secteur',meta.secteur_principal||'—'],['APE',`${meta.ape_identifie||'—'} — ${meta.ape_intitule||'—'}`],[`Score`,`${sc.total||0}/60 — ${sc.mention||'—'}`],['Date',data._date||new Date().toLocaleDateString('fr-FR')]].map(([l,v])=>new TableRow({children:[cell(l,3000,{fill:BXP,bold:true,color:BXD}),cell(v,4000)]}))
+      }),
+      ep(600),
+      new Paragraph({children:[new TextRun({text:"LOSKO CORPORATION — Assistance à Maîtrise d'Ouvrage — Les Abymes, Guadeloupe",font:'Arial',size:16,color:GMI})],alignment:AlignmentType.CENTER,spacing:{after:0}}),
+      pb()
+    ];
+
+    // ── SYNTHÈSE ──
+    const synthRows = [
+      new TableRow({children:[cell('Champ',2800,{fill:BX,bold:true,color:WHT}),cell('Valeur',4800,{fill:BX,bold:true,color:WHT}),cell('Niveau',1760,{fill:BX,bold:true,color:WHT})]}),
+      ...synth.map(r=>new TableRow({children:[cell(r.champ,2800,{fill:GPL,bold:true}),cell(r.valeur||'—',4800),cell(clabel[r.certitude]||r.certitude,1760,{fill:cmap[r.certitude]||GPL})]}))
+    ];
+    const angles = (meta.angles_guadeloupe_selectionnes||[]);
+
+    // ── DOSSIER ──
+    const dossierContent = [];
+    (data.dossier||[]).forEach(r => {
+      dossierContent.push(new Paragraph({
+        children:[new TextRun({text:`${r.num}. `,font:'Arial',size:22,bold:true,color:BX}),new TextRun({text:r.titre.toUpperCase(),font:'Arial',size:22,bold:true,color:BXD})],
+        spacing:{before:320,after:160},
+        border:{bottom:{style:BorderStyle.SINGLE,size:4,color:BXP,space:4}}
+      }));
+      body(r.contenu).forEach(p=>dossierContent.push(p));
+      dossierContent.push(ep(160));
+    });
+
+    // ── QUESTIONS ──
+    const qContent = [];
+    const qdata = data.questions||{};
+    const addQGroup = (label,items,color) => {
+      if(!items?.length)return;
+      qContent.push(h2(label));
+      items.forEach(qi=>qContent.push(new Paragraph({children:[new TextRun({text:`Q${qi.num}. `,font:'Arial',size:20,bold:true,color}),new TextRun({text:qi.question,font:'Arial',size:20,color:ANT})],spacing:{after:100}})));
+      qContent.push(ep(80));
+    };
+    addQGroup('Critiques — Bloquantes pour le dépôt',qdata.critiques,'B71C1C');
+    addQGroup('Importantes — Renforcent la solidité',qdata.importantes,'E65100');
+    addQGroup('Optionnelles — Améliorent le dossier',qdata.optionnelles,'1B5E20');
+
+    // ── CHECKLIST ──
+    const clContent = [];
+    const cldata = data.checklist||{};
+    const addCL=(label,items,icon)=>{if(!items?.length)return;clContent.push(h2(label));items.forEach(item=>clContent.push(new Paragraph({children:[new TextRun({text:`${icon}  ${item}`,font:'Arial',size:20,color:ANT})],spacing:{after:80}})));clContent.push(ep(80));};
+    addCL('Disponible',cldata.disponible,'✅');
+    addCL('Manquant',cldata.manquant,'❌');
+    addCL('À vérifier',cldata.a_verifier,'⚠');
+    addCL('Pièces probablement nécessaires',cldata.pieces_probables,'📎');
+
+    // ── SCORE ──
+    const scContent = [
+      new Paragraph({children:[new TextRun({text:'Score global : ',font:'Arial',size:24,bold:true,color:BXD}),new TextRun({text:`${sc.total||0}/60`,font:'Arial',size:32,bold:true,color:BX}),new TextRun({text:`  — ${sc.mention||'—'}`,font:'Arial',size:24,color:ANT})],spacing:{after:200}}),
+      new Table({width:{size:9360,type:WidthType.DXA},columnWidths:[4000,1000,4360],rows:[
+        new TableRow({children:[cell('Axe',4000,{fill:BX,bold:true,color:WHT}),cell('Note',1000,{fill:BX,bold:true,color:WHT}),cell('Commentaire',4360,{fill:BX,bold:true,color:WHT})]}),
+        ...(sc.axes||[]).map((ax,i)=>new TableRow({children:[cell(ax.axe,4000,{fill:i%2?GPL:WHT,bold:true}),cell(`${ax.note}/10`,1000,{fill:i%2?GPL:WHT,bold:true,color:BX}),cell(ax.commentaire||'',4360,{fill:i%2?GPL:WHT})]}))
+      ]}),
+      sc.recommandation ? new Paragraph({children:[new TextRun({text:'Recommandation : ',font:'Arial',size:20,bold:true,color:BXD}),new TextRun({text:sc.recommandation,font:'Arial',size:20,color:ANT})],spacing:{before:200,after:120}}) : ep()
+    ];
+
+    // Assemble
+    const allChildren = [
+      ...cover,
+      h1('A. FICHE DE SYNTHÈSE'), ep(80),
+      new Table({width:{size:9360,type:WidthType.DXA},columnWidths:[2800,4800,1760],rows:synthRows}),
+      ...(angles.length ? [ep(120),h2('Angles Guadeloupe retenus'),...angles.map(a=>new Paragraph({children:[new TextRun({text:`• ${a}`,font:'Arial',size:20,color:BXD})],spacing:{after:80}}))] : []),
+      pb(),
+      h1('B. DOSSIER FEDER RÉDIGÉ'), ep(80), ...dossierContent, pb(),
+      h1('C. QUESTIONS MANQUANTES'), ep(80), ...qContent, pb(),
+      h1('D. CHECKLIST DE DÉPÔT'), ep(80), ...clContent, pb(),
+      h1('E. SCORE DE MATURITÉ'), ep(80), ...scContent
+    ];
+
+    const doc = new Document({
+      numbering:{config:[{reference:'bullets',levels:[{level:0,format:LevelFormat.BULLET,text:'•',alignment:AlignmentType.LEFT,style:{paragraph:{indent:{left:720,hanging:360}},run:{font:'Arial',size:20}}}]}]},
+      styles:{
+        default:{document:{run:{font:'Arial',size:22}}},
+        paragraphStyles:[
+          {id:'Heading1',name:'Heading 1',basedOn:'Normal',next:'Normal',quickFormat:true,run:{size:28,bold:true,font:'Arial',color:BXD},paragraph:{spacing:{before:400,after:160},outlineLevel:0}},
+          {id:'Heading2',name:'Heading 2',basedOn:'Normal',next:'Normal',quickFormat:true,run:{size:24,bold:true,font:'Arial',color:BX},paragraph:{spacing:{before:240,after:120},outlineLevel:1}}
+        ]
       },
-      footers: { default: buildFooter() },
-      children: allChildren
-    }]
-  });
+      sections:[{
+        properties:{page:{size:{width:11906,height:16838},margin:{top:1440,right:1440,bottom:1440,left:1440}}},
+        footers:{default:new Footer({children:[new Paragraph({children:[new TextRun({text:"LOSKO CORPORATION — Assistance à Maîtrise d'Ouvrage — Guadeloupe     |     Page ",font:'Arial',size:16,color:GMI}),new PageNumberElement()],alignment:AlignmentType.CENTER})]})},
+        children:allChildren
+      }]
+    });
 
-  const buffer = await Packer.toBuffer(doc);
-  fs.writeFileSync(outputPath, buffer);
-  console.log('DONE:' + outputPath);
+    Packer.toBlob(doc).then(blob=>{
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `LOSKO_FEDER_${(data._client||'dossier').replace(/\s+/g,'_')}_${new Date().toISOString().slice(0,10)}.docx`;
+      a.click();
+      URL.revokeObjectURL(url);
+      document.getElementById('docx-notice').style.display = 'block';
+      setTimeout(()=>document.getElementById('docx-notice').style.display='none',4000);
+      showToast('📄 Fichier Word téléchargé');
+    });
+  } catch(e) {
+    console.error(e);
+    showToast('Erreur Word : ' + e.message + ' — export .txt à la place');
+    downloadTxt();
+  }
 }
 
-generateDoc().catch(err => {
-  console.error('ERROR:' + err.message);
-  process.exit(1);
-});
+// ══════════════════════════════════════════
+// HISTORY
+// ══════════════════════════════════════════
+function getHistory() {
+  try { return JSON.parse(localStorage.getItem(HISTORY_KEY)||'[]'); } catch { return []; }
+}
+
+function saveToHistory(data) {
+  const hist = getHistory();
+  hist.unshift({...data, _id: Date.now()});
+  if (hist.length > 50) hist.pop();
+  localStorage.setItem(HISTORY_KEY, JSON.stringify(hist));
+  updateHistCount();
+}
+
+function updateHistCount() {
+  const n = getHistory().length;
+  document.getElementById('hist-count').textContent = n;
+}
+
+function clearHistory() {
+  localStorage.removeItem(HISTORY_KEY);
+  updateHistCount();
+  renderHistory();
+  showToast('Historique effacé');
+}
+
+function deleteHistoryItem(id) {
+  const hist = getHistory().filter(h => h._id !== id);
+  localStorage.setItem(HISTORY_KEY, JSON.stringify(hist));
+  updateHistCount();
+  renderHistory();
+  showToast('Dossier supprimé');
+}
+
+function loadHistoryItem(id) {
+  const item = getHistory().find(h => h._id === id);
+  if (!item) return;
+  resultData = item;
+  showScreen('agent');
+  setState('result');
+  renderResult(item);
+  showToast('Dossier chargé');
+}
+
+function renderHistory() {
+  const hist = getHistory();
+  const cont = document.getElementById('history-container');
+  document.getElementById('hist-meta').textContent = `${hist.length} dossier${hist.length>1?'s':''} — Stockage local (navigateur)`;
+
+  if (!hist.length) {
+    cont.innerHTML = `<div class="history-empty"><div class="history-empty-icon">📂</div><div class="history-empty-text">Aucun dossier dans l'historique.<br>Générez votre premier dossier FEDER.</div></div>`;
+    return;
+  }
+
+  cont.innerHTML = `<div class="history-grid">${hist.map(item => {
+    const score = item.score?.total||0;
+    const mention = item.score?.mention||'—';
+    const menStyle = {'Insuffisant':'background:#FFEBEE;color:#B71C1C','En cours':'background:#FFF3E0;color:#E65100','Avancé':'background:#E3F2FD;color:#1565C0','Prêt':'background:#E8F5E9;color:#1B5E20'}[mention]||'background:#F5F5F5;color:#666';
+    const dateStr = item._generated ? new Date(item._generated).toLocaleDateString('fr-FR',{day:'2-digit',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'}) : item._date||'—';
+    return `<div class="history-card" onclick="loadHistoryItem(${item._id})">
+      <div class="hc-header">
+        <div><div class="hc-client">${item._client||'Dossier sans nom'}</div><div class="hc-date">${dateStr}</div></div>
+        <span class="hc-mention" style="${menStyle}">${mention}</span>
+      </div>
+      ${item.meta?.secteur_principal?`<div class="hc-sector">${item.meta.secteur_principal}</div>`:''}
+      <div class="hc-score-row">
+        <div class="hc-score-num">${score}</div>
+        <div class="hc-score-label">/60</div>
+        <div class="hc-score-bar"><div class="hc-score-fill" style="width:${Math.round(score/60*100)}%"></div></div>
+      </div>
+      <div class="hc-actions" onclick="event.stopPropagation()">
+        <button class="hc-btn" onclick="loadHistoryItem(${item._id})">📂 Ouvrir</button>
+        <button class="hc-btn word" onclick="downloadWord(getHistory().find(h=>h._id===${item._id}))">📄 Word</button>
+        <button class="hc-btn" onclick="_dlTxtHist(${item._id})">⬇ .txt</button>
+        <button class="hc-btn del" onclick="deleteHistoryItem(${item._id})">🗑</button>
+      </div>
+    </div>`;
+  }).join('')}</div>`;
+}
+
+function _dlTxtHist(id) {
+  const item = getHistory().find(h=>h._id===id);
+  if (!item) return;
+  const prev = resultData;
+  resultData = item;
+  downloadTxt();
+  resultData = prev;
+}
+
+function exportAllHistory() {
+  const hist = getHistory();
+  if (!hist.length) { showToast('Historique vide'); return; }
+  const blob = new Blob([JSON.stringify(hist,null,2)], {type:'application/json'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `LOSKO_FEDER_historique_${new Date().toISOString().slice(0,10)}.json`;
+  a.click();
+  URL.revokeObjectURL(a.href);
+  showToast('Historique exporté en JSON');
+}
+
+// ══════════════════════════════════════════
+// UTILS
+// ══════════════════════════════════════════
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'),3200);
+}
+
+function showError(id, msg) {
+  const el = document.getElementById(id);
+  if(el){el.textContent=msg;el.style.display='block';}
+}
+
+function hideError(id) {
+  const el = document.getElementById(id);
+  if(el) el.style.display='none';
+}
+
+function updateWordCount() {
+  const text = document.getElementById('t-transcript').value;
+  const words = text.trim() ? text.trim().split(/\s+/).length : 0;
+  document.getElementById('word-count').textContent = words + ' mots';
+  document.getElementById('min-words').style.display = words > 0 && words < 30 ? 'block' : 'none';
+}
+
+function resetTranscription() {
+  ['t-transcript','t-client','t-ape'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('t-sector').value='';
+  document.getElementById('t-date').value=new Date().toISOString().slice(0,10);
+  updateWordCount();
+  hideError('t-error');
+  setState('empty');
+  resultData=null;
+}
+
+// Init
+document.getElementById('t-date').value = new Date().toISOString().slice(0,10);
+updateHistCount();
+setState('empty');
+</script>
+</body>
+</html>
